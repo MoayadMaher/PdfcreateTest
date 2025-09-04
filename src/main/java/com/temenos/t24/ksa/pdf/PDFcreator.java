@@ -1,4 +1,4 @@
-package com.temenos.t24;
+package com.temenos.t24.ksa.pdf;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -32,41 +32,45 @@ import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
 import com.ibm.icu.text.Bidi;
 import com.ibm.icu.text.ArabicShaping;
 import com.ibm.icu.text.ArabicShapingException;
+import com.temenos.t24.ksa.pdf.model.InvoiceData;
+import com.temenos.t24.ksa.pdf.model.InvoiceLineItem;
+import com.temenos.t24.ksa.pdf.model.InvoiceParser;
 
 import java.io.File;
 
 
 public class PDFcreator {
-    public static String createPDF(String args){
 
-        System.out.println("inputed args" + args);
+    public static String createPDF(String args) {
+        // Convert the raw string to your data model
+        // TODO remove this print statement
+        System.out.println("Received args: " + args);
+        InvoiceData data = InvoiceParser.parse(args);
+        return createPDF(data);
+    }
 
-        String[] argsArray = args.split("<fm>");
-        String path = argsArray[0];
-        String arabicFontPath =  argsArray[6]; //"C:\\Users\\moayadj\\IdeaProjects\\PDFcreatorTaxGTS\\test-resources\\fonts\\NotoNaskhArabic-Regular.ttf";
-        String logoPath = argsArray[7]; //"C:\\Users\\moayadj\\IdeaProjects\\PDFcreatorTaxGTS\\\\test-resources\\images\\NBI_LOGO.jpg";
-        String footerPath = argsArray[8];
-        String[] taxBillDetailsArr = argsArray[1].split("<sm>");
-        String[] custDetailsArr = argsArray[2].split("<sm>");
-        List<String> taxDetailsArrList = Arrays.asList(argsArray[3].split("<vm>"));
-        String[] taxTotalDetailsArr = argsArray[4].split("<sm>");
-        String[] taxIbanDetArr = argsArray[5].split("<sm>");
+    public static String createPDF(InvoiceData data) {
 
-        System.out.println("argsArray" + Arrays.toString(argsArray));
-        System.out.println("path" + path);
-        System.out.println("arabicFontPath" + arabicFontPath);
-        System.out.println("logoPath" + logoPath);
-        System.out.println("footerPath" + footerPath);
-        System.out.println("taxBillDetailsArr" + Arrays.toString(taxBillDetailsArr));
-        System.out.println("custDetailsArr" + Arrays.toString(custDetailsArr));
-        System.out.println("taxTotalDetailsArr" + Arrays.toString(taxTotalDetailsArr));
-        System.out.println("taxIbanDetArr" + Arrays.toString(taxIbanDetArr));
+        // TODO remove this print statement
+        System.out.println("inputed data" + data);
+
+        String path = data.path;
+        String arabicFontPath = data.arabicFontPath;
+        String logoPath = data.logoPath;
+        String footerPath = data.footerPath;
+
 
         try {
-            File f = new File(arabicFontPath);
-            System.out.println("Font path = " + arabicFontPath);
-            System.out.println("Font exists? " + f.exists());
-            System.out.println("Font readable? " + f.canRead());
+
+            // TODO remove this for loop check this just to check the availability
+            File[] filesToCheck = {new File(logoPath), new File(footerPath), new File(arabicFontPath)};
+            for (int i = 0; i < 3; i++) {
+                System.out.println("===================================================");
+                System.out.println("File path = " + filesToCheck[i].getAbsolutePath());
+                System.out.println("File exists? " + filesToCheck[i].exists());
+                System.out.println("File readable? " + filesToCheck[i].canRead());
+                System.out.println("===================================================");
+            }
 
             PdfFont pdfFont = PdfFontFactory.createFont(
                     arabicFontPath,
@@ -80,7 +84,7 @@ public class PDFcreator {
             System.out.println("header creation started");
 
             // Page header
-            float [] pointColumnWidths1 = {380F,220F};
+            float[] pointColumnWidths1 = {380F, 220F};
 
             System.out.println("pointColumnWidths1" + Arrays.toString(pointColumnWidths1));
 
@@ -124,8 +128,7 @@ public class PDFcreator {
             System.out.println("header creation is done");
 
 
-
-            String qrContent = "https://example.com";
+            String qrContent = "==wMA4MC1jEVQxNTozMDowMFoEBzEwMDAuMDAFByN0wNC0MzUwMDAwMwMUMjAyMi5yZHMCDzMxMDEyMjM29JzIFJlY2AQxC";
             BarcodeQRCode qrCode = new BarcodeQRCode(qrContent);
             PdfFormXObject qrObject = qrCode.createFormXObject(pdfDocument);
             Image qrImage = new Image(qrObject);
@@ -140,22 +143,20 @@ public class PDFcreator {
             System.out.println("info header creation started");
 
             // Info header
-            float [] pointColumnWidths = {175F, 109F};
+            float[] pointColumnWidths = {175F, 109F};
             Table table2 = new Table(pointColumnWidths);
             table2.setMarginTop(30F);
             table2.setHorizontalAlignment(HorizontalAlignment.CENTER);
-            if (!taxIbanDetArr[0].equals("EMPTY")) {
-                table2.addCell(
-                        new Cell().add(
-                                        new Paragraph(taxIbanDetArr[0])
-                                                .setFontSize(8F)
-                                                .setTextAlignment(TextAlignment.RIGHT)
-                                ).setBorder(Border.NO_BORDER)
-                                .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
-            }else {
-                table2.addCell(new Cell().add(new Paragraph("")).setBorder(Border.NO_BORDER));
-            }
+
+            table2.addCell(
+                    new Cell().add(
+                                    new Paragraph(data.iban.ibanNumber))
+                            .setFontSize(8F)
+                            .setTextAlignment(TextAlignment.RIGHT)
+                            .setBorder(Border.NO_BORDER)
+                            .setVerticalAlignment(VerticalAlignment.MIDDLE)
+            );
+
 
             table2.addCell(
                     new Cell().add(
@@ -171,16 +172,15 @@ public class PDFcreator {
                             .setMarginBottom(0)
             );
 
-            if (!taxIbanDetArr[1].equals("EMPTY")) {
-                table2.addCell(new Cell()
-                        .add(new Paragraph(taxIbanDetArr[1]))
-                        .setFontSize(8F)
-                        .setTextAlignment(TextAlignment.RIGHT)
-                        .setBorder(Border.NO_BORDER)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
-            }else {
-                table2.addCell(new Cell().add(new Paragraph("")).setBorder(Border.NO_BORDER));
-            }
+
+            table2.addCell(new Cell()
+                    .add(new Paragraph(data.iban.taxRegistrationNumber)
+                            .setFontSize(8F)
+                            .setTextAlignment(TextAlignment.RIGHT)
+                            .setVerticalAlignment(VerticalAlignment.MIDDLE))
+                    .setBorder(Border.NO_BORDER)
+            );
+
 
             table2.addCell(
                     new Cell().add(
@@ -201,7 +201,7 @@ public class PDFcreator {
             System.out.println("First table  creation started");
 
             // First table
-            float [] pointColumnWidths3 = {90F, 100F, 90F, 90F, 150F, 90F};
+            float[] pointColumnWidths3 = {90F, 100F, 90F, 90F, 150F, 90F};
             Table table3 = new Table(pointColumnWidths3);
             table3.setMarginTop(10F);
 
@@ -224,7 +224,7 @@ public class PDFcreator {
             );
 
             table3.addCell(new Cell()
-                    .add(new Paragraph(taxBillDetailsArr[0]))
+                    .add(new Paragraph(data.header.invoiceNumber))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
@@ -245,7 +245,7 @@ public class PDFcreator {
             );
 
             table3.addCell(new Cell()
-                    .add(new Paragraph(taxBillDetailsArr[1]))
+                    .add(new Paragraph(data.header.invoiceDateTime))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
@@ -266,7 +266,7 @@ public class PDFcreator {
             );
 
             table3.addCell(new Cell()
-                    .add(new Paragraph(convertDate(taxBillDetailsArr[2])))
+                    .add(new Paragraph(convertDate(data.header.serviceStartDate)))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
@@ -287,7 +287,7 @@ public class PDFcreator {
             );
 
             table3.addCell(new Cell()
-                    .add(new Paragraph(convertDate(taxBillDetailsArr[3])))
+                    .add(new Paragraph(convertDate(data.header.serviceEndDate)))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
@@ -306,7 +306,7 @@ public class PDFcreator {
 
 
             // Second table - Customer Details
-            float [] pointColumnWidths4 = {50F, 200F, 100F, 50F, 200F, 100F};
+            float[] pointColumnWidths4 = {50F, 200F, 100F, 50F, 200F, 100F};
             Table table4 = new Table(pointColumnWidths4);
             table4.setMarginTop(10F);
 
@@ -330,31 +330,24 @@ public class PDFcreator {
                             .setBackgroundColor(Color.convertRgbToCmyk(new DeviceRgb(182, 248, 252)))
             );
 
-            String[] customerNameArr = custDetailsArr[2].split("<sm1>");
-            String[] customerAddrArr = custDetailsArr[3].split("<sm1>");
 
-            table4.addCell(new Cell(2,0)
+            table4.addCell(new Cell(2, 0)
                     .add(new Paragraph("Name"))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
 
-            if (!customerNameArr[0].equals("EMPTY")) {
+
                 table4.addCell(new Cell()
-                        .add(new Paragraph(customerNameArr[0]))
+                        .add(new Paragraph(data.customer.englishName))
                         .setFontSize(7F)
                         .setVerticalAlignment(VerticalAlignment.MIDDLE)
                         .setBorderBottom(Border.NO_BORDER)
                         .setTextAlignment(TextAlignment.CENTER)
                 );
-            }else {
-                table4.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setBorderBottom(Border.NO_BORDER)
-                );
-            }
 
-            table4.addCell(new Cell(2,0).add(
+
+            table4.addCell(new Cell(2, 0).add(
                             new Paragraph(processArabic("الاسم"))
                                     .setFontSize(8F)
                                     .setFont(pdfFont)
@@ -364,28 +357,21 @@ public class PDFcreator {
                     )
             );
 
-            table4.addCell(new Cell(2,0)
+            table4.addCell(new Cell(2, 0)
                     .add(new Paragraph("Address"))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
 
-            if (!customerAddrArr[0].equals("EMPTY")) {
                 table4.addCell(new Cell().add(
-                                new Paragraph(customerAddrArr[0]))
+                                new Paragraph(data.customer.englishAddress))
                         .setFontSize(8F)
                         .setVerticalAlignment(VerticalAlignment.MIDDLE)
                         .setBorderBottom(Border.NO_BORDER)
                         .setTextAlignment(TextAlignment.CENTER)
                 );
-            }else {
-                table4.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setBorderBottom(Border.NO_BORDER)
-                );
-            }
 
-            table4.addCell(new Cell(2,0).add(
+            table4.addCell(new Cell(2, 0).add(
                             new Paragraph(processArabic("العنوان"))
                                     .setFontSize(8F)
                                     .setFont(pdfFont)
@@ -395,9 +381,8 @@ public class PDFcreator {
                     )
             );
 
-            if (!customerNameArr[1].equals("EMPTY")) {
                 table4.addCell(new Cell()
-                        .add((new Paragraph(customerNameArr[1])))
+                        .add((new Paragraph(processArabic(data.customer.arabicName))))
                         .setFontSize(7F)
                         .setFont(pdfFont)
                         .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
@@ -406,16 +391,8 @@ public class PDFcreator {
                         .setTextAlignment(TextAlignment.CENTER)
                 );
 
-            }else {
                 table4.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setBorderTop(Border.NO_BORDER)
-                );
-            }
-
-            if (!customerAddrArr[1].equals("EMPTY")) {
-                table4.addCell(new Cell()
-                        .add(new Paragraph(processArabic(customerAddrArr[1]))
+                        .add(new Paragraph(processArabic(data.customer.arabicAddress))
                                         .setFontSize(7F)
                                         .setFont(pdfFont)
                                         .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
@@ -425,29 +402,22 @@ public class PDFcreator {
                         .setTextAlignment(TextAlignment.CENTER)
                 );
 
-            }else {
-                table4.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setBorderTop(Border.NO_BORDER)
-                );
-            }
 
-            String[] custCityArr = custDetailsArr[4].split("<sm1>");
 
-            table4.addCell(new Cell(2,0)
+            table4.addCell(new Cell(2, 0)
                     .add(new Paragraph("VAT Number"))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
 
-            table4.addCell(new Cell(2,0)
-                    .add(new Paragraph(custDetailsArr[0]))
+            table4.addCell(new Cell(2, 0)
+                    .add(new Paragraph(data.customer.vatNumber))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
                     .setTextAlignment(TextAlignment.CENTER)
             );
 
-            table4.addCell(new Cell(2,0).add(
+            table4.addCell(new Cell(2, 0).add(
                             new Paragraph(processArabic("الرقم الضريبي"))
                                     .setFontSize(8F)
                                     .setFont(pdfFont)
@@ -457,27 +427,20 @@ public class PDFcreator {
                     )
             );
 
-            table4.addCell(new Cell(2,0)
+            table4.addCell(new Cell(2, 0)
                     .add(new Paragraph("City"))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
 
-            if (!custCityArr[0].equals("EMPTY")) {
                 table4.addCell(new Cell()
-                        .add(new Paragraph(custCityArr[0]))
+                        .add(new Paragraph(data.customer.englishCity))
                         .setFontSize(8F)
                         .setVerticalAlignment(VerticalAlignment.MIDDLE)
                         .setTextAlignment(TextAlignment.CENTER)
                         .setBorderBottom(Border.NO_BORDER));
-            }else {
-                table4.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setBorder(Border.NO_BORDER)
-                );
-            }
 
-            table4.addCell(new Cell(2,0).add(
+            table4.addCell(new Cell(2, 0).add(
                             new Paragraph(processArabic("المدينة"))
                                     .setFontSize(8F)
                                     .setFont(pdfFont)
@@ -487,9 +450,8 @@ public class PDFcreator {
                     )
             );
 
-            if (!custCityArr[1].equals("EMPTY")) {
                 table4.addCell(new Cell()
-                        .add(new Paragraph(processArabic(custCityArr[1]))
+                        .add(new Paragraph(processArabic(data.customer.arabicCity))
                                 .setFontSize(8F)
                                 .setFont(pdfFont)
                                 .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
@@ -497,29 +459,22 @@ public class PDFcreator {
                         )
                         .setBorderTop(Border.NO_BORDER)
                 );
-            }else {
-                table4.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setBorderTop(Border.NO_BORDER)
-                );
-            }
 
 
-            String[] custCountryArr = custDetailsArr[5].split("<sm1>");
-            table4.addCell(new Cell(2,0)
+            table4.addCell(new Cell(2, 0)
                     .add(new Paragraph("VAT Group#"))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
 
-            table4.addCell(new Cell(2,0)
-                    .add(new Paragraph(custDetailsArr[1]))
+            table4.addCell(new Cell(2, 0)
+                    .add(new Paragraph(data.customer.vatGroupNumber))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
                     .setTextAlignment(TextAlignment.CENTER)
             );
 
-            table4.addCell(new Cell(2,0).add(
+            table4.addCell(new Cell(2, 0).add(
                             new Paragraph(processArabic("الرقم الضريبي للمجموعة"))
                                     .setFontSize(8F)
                                     .setFont(pdfFont)
@@ -529,28 +484,21 @@ public class PDFcreator {
                     )
             );
 
-            table4.addCell(new Cell(2,0)
+            table4.addCell(new Cell(2, 0)
                     .add(new Paragraph("Country"))
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
 
-            if(!custCountryArr[0].equals("EMPTY")) {
                 table4.addCell(new Cell()
-                        .add(new Paragraph(custCountryArr[0]))
+                        .add(new Paragraph(data.customer.englishCountry))
                         .setFontSize(8F)
                         .setVerticalAlignment(VerticalAlignment.MIDDLE)
                         .setTextAlignment(TextAlignment.CENTER)
                         .setBorderBottom(Border.NO_BORDER)
                 );
-            }else {
-                table4.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setBorderBottom(Border.NO_BORDER)
-                );
-            }
 
-            table4.addCell(new Cell(2,0).add(
+            table4.addCell(new Cell(2, 0).add(
                             new Paragraph(processArabic("البلد"))
                                     .setFontSize(8F)
                                     .setFont(pdfFont)
@@ -560,9 +508,8 @@ public class PDFcreator {
                     )
             );
 
-            if(!custCountryArr[1].equals("EMPTY")) {
                 table4.addCell(new Cell()
-                        .add(new Paragraph(processArabic(custCountryArr[1]))
+                        .add(new Paragraph(processArabic(data.customer.arabicCountry))
                                 .setFontSize(8F)
                                 .setFont(pdfFont)
                                 .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
@@ -571,18 +518,12 @@ public class PDFcreator {
                         .setVerticalAlignment(VerticalAlignment.MIDDLE)
                         .setBorderTop(Border.NO_BORDER)
                 );
-            }else {
-                table4.addCell(new Cell()
-                        .add(new Paragraph(""))
-                        .setBorderTop(Border.NO_BORDER)
-                );
-            }
 
             System.out.println("Second table creation is done");
             System.out.println("Third table  creation started");
 
             // Third table
-            float [] pointColumnWidths5 = {75F, 200F, 50F, 50F, 30F, 120F, 30F, 80F, 75F};
+            float[] pointColumnWidths5 = {75F, 200F, 50F, 50F, 30F, 120F, 30F, 80F, 75F};
             Table table5 = new Table(pointColumnWidths5);
             table5.setMarginTop(10F);
 
@@ -756,94 +697,81 @@ public class PDFcreator {
                             .setBackgroundColor(Color.convertRgbToCmyk(new DeviceRgb(203, 245, 247)))
             );
 
-            for (int i=0; i<taxDetailsArrList.size(); i++)
-            {
-                String[] taxDetailsArr = taxDetailsArrList.get(i).split("<sm>");
-                table5.addCell(new Cell(2,0)
-                        .add(new Paragraph(convertDate(taxDetailsArr[0])))
+            for (InvoiceLineItem item : data.lineItems) {
+                // supply date (row span = 2)
+                table5.addCell(new Cell(2, 0)
+                        .add(new Paragraph(convertDate(item.supplyDate)))
                         .setFontSize(8F)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
 
-                String[] taxDescArr = taxDetailsArr[1].split("<sm1>");
-                if(!taxDescArr[0].equals("EMPTY")) {
+                // Arabic description (first segment) – if empty, insert blank
+                if (item.arabicDescription != null && !"EMPTY".equalsIgnoreCase(item.arabicDescription)) {
                     table5.addCell(new Cell()
-                            .add(new Paragraph(processArabic(taxDescArr[0]))
+                            .add(new Paragraph(processArabic(item.arabicDescription))
                                     .setFontSize(8F)
                                     .setFont(pdfFont)
                                     .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                                    .setTextAlignment(TextAlignment.CENTER)
-                            )
-                                    .setBorderBottom(Border.NO_BORDER)
-                    );
-                }else {
-                    table5.addCell(new Cell()
-                            .add(new Paragraph(""))
-                            .setBorderBottom(Border.NO_BORDER)
-                    );
+                                    .setTextAlignment(TextAlignment.CENTER))
+                            .setBorderBottom(Border.NO_BORDER));
+                } else {
+                    table5.addCell(new Cell().add(new Paragraph(""))
+                            .setBorderBottom(Border.NO_BORDER));
                 }
 
-                table5.addCell(new Cell(2,0)
-                        .add(new Paragraph(taxDetailsArr[2]))
+                // unit price
+                table5.addCell(new Cell(2, 0)
+                        .add(new Paragraph(item.unitPrice != null ? item.unitPrice : ""))
                         .setFontSize(8F)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
-
-                table5.addCell(new Cell(2,0)
-                        .add(new Paragraph(taxDetailsArr[3])).setFontSize(8F)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
-
-                table5.addCell(new Cell(2,0)
-                        .add(new Paragraph(taxDetailsArr[4]))
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
+                // quantity
+                table5.addCell(new Cell(2, 0)
+                        .add(new Paragraph(item.quantity != null ? item.quantity : ""))
                         .setFontSize(8F)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
-
-                table5.addCell(new Cell(2,0).add(
-                                new Paragraph(taxDetailsArr[5]))
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
+                // discount
+                table5.addCell(new Cell(2, 0)
+                        .add(new Paragraph(item.discount != null ? item.discount : ""))
                         .setFontSize(8F)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
-
-                table5.addCell(new Cell(2,0)
-                        .add(new Paragraph(taxDetailsArr[6]))
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
+                // total excluding tax
+                table5.addCell(new Cell(2, 0)
+                        .add(new Paragraph(item.totalExcludingTax != null ? item.totalExcludingTax : ""))
                         .setFontSize(8F)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
-
-                table5.addCell(new Cell(2,0)
-                        .add(new Paragraph(taxDetailsArr[7]))
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
+                // rate
+                table5.addCell(new Cell(2, 0)
+                        .add(new Paragraph(item.rate != null ? item.rate : ""))
                         .setFontSize(8F)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
-
-                table5.addCell(new Cell(2,0)
-                        .add(new Paragraph(taxDetailsArr[8]))
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
+                // tax amount
+                table5.addCell(new Cell(2, 0)
+                        .add(new Paragraph(item.taxAmount != null ? item.taxAmount : ""))
                         .setFontSize(8F)
-                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-                );
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
+                // total price
+                table5.addCell(new Cell(2, 0)
+                        .add(new Paragraph(item.totalPrice != null ? item.totalPrice : ""))
+                        .setFontSize(8F)
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE));
 
-                if(!taxDescArr[1].equals("EMPTY")) {
+                // English description (second segment) – goes after the numeric columns
+                if (item.englishDescription != null && !"EMPTY".equalsIgnoreCase(item.englishDescription)) {
                     table5.addCell(new Cell()
-                            .add(new Paragraph(taxDescArr[1]))
+                            .add(new Paragraph(item.englishDescription))
                             .setFontSize(8F)
                             .setTextAlignment(TextAlignment.CENTER)
-                            .setBorderTop(Border.NO_BORDER)
-                    );
-                }else {
+                            .setBorderTop(Border.NO_BORDER));
+                } else {
                     table5.addCell(new Cell()
                             .add(new Paragraph(""))
-                            .setBorderTop(Border.NO_BORDER)
-                    );
+                            .setBorderTop(Border.NO_BORDER));
                 }
             }
-
             System.out.println("Third table creation is done");
             System.out.println("Forth  table  creation started");
 
             // Forth table
-            float [] pointColumnWidths6 = {200F, 200F, 200F};
+            float[] pointColumnWidths6 = {200F, 200F, 200F};
             Table table6 = new Table(pointColumnWidths6);
             table6.setHorizontalAlignment(HorizontalAlignment.CENTER);
             table6.setMarginTop(10F);
@@ -856,7 +784,7 @@ public class PDFcreator {
             );
 
             table6.addCell(new Cell()
-                    .add(new Paragraph(taxTotalDetailsArr[0])).setBold().setFontSize(8F)
+                    .add(new Paragraph(data.totals.totalExcludingVat)).setBold().setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
 
@@ -878,7 +806,7 @@ public class PDFcreator {
             );
 
             table6.addCell(new Cell()
-                    .add(new Paragraph(taxTotalDetailsArr[1]))
+                    .add(new Paragraph(data.totals.totalDiscount))
                     .setBold().setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
             );
@@ -898,7 +826,7 @@ public class PDFcreator {
             );
 
             table6.addCell(new Cell()
-                    .add(new Paragraph(taxTotalDetailsArr[2]))
+                    .add(new Paragraph(data.totals.totalVat))
                     .setBold()
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
@@ -922,7 +850,7 @@ public class PDFcreator {
             );
 
             table6.addCell(new Cell()
-                    .add(new Paragraph(taxTotalDetailsArr[3]))
+                    .add(new Paragraph(data.totals.amountIncludesVat))
                     .setBold()
                     .setFontSize(8F)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE)
@@ -958,8 +886,8 @@ public class PDFcreator {
             pdfDocument.addEventHandler(PdfDocumentEvent.END_PAGE, eventHandler);
             Rectangle pageSize = pdfDocument.getLastPage().getPageSize();
             float x = pageSize.getLeft() + 36;
-            float y = pageSize.getBottom()-20;
-            String imgFooter =  footerPath;
+            float y = pageSize.getBottom() - 20;
+            String imgFooter = footerPath;
             ImageData dataFooter = ImageDataFactory.create(imgFooter);
             Image imageFooter = new Image(dataFooter);
             imageFooter.setMarginTop(20F);
@@ -973,7 +901,7 @@ public class PDFcreator {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Exception occured "+ e.getMessage());
+            System.out.println("Exception occured " + e.getMessage());
             Throwable cause = e.getCause();
             if (cause != null) {
                 System.err.println("Root cause: " + cause);

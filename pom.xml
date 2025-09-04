@@ -16,41 +16,60 @@
     </properties>
 
     <dependencies>
+        <!-- iText 7.2.6 components -->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>kernel</artifactId>
-            <version>7.2.4</version>
+            <version>7.2.6</version>
         </dependency>
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>layout</artifactId>
-            <version>7.2.4</version>
+            <version>7.2.6</version>
         </dependency>
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>io</artifactId>
-            <version>7.2.4</version>
+            <version>7.2.6</version>
         </dependency>
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>barcodes</artifactId>
-            <version>7.2.4</version>
+            <version>7.2.6</version>
         </dependency>
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>forms</artifactId>
-            <version>7.2.4</version>
+            <version>7.2.6</version>
         </dependency>
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>sign</artifactId>
-            <version>7.2.4</version>
+            <version>7.2.6</version>
         </dependency>
 
+        <!-- Updated ICU4J -->
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
-            <version>74.2</version>
+            <version>77.1</version>
+        </dependency>
+
+        <!-- Added BouncyCastle dependencies -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.81</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.81</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcutil-jdk18on</artifactId>
+            <version>1.81</version>
         </dependency>
     </dependencies>
 
@@ -59,7 +78,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -80,7 +99,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.example.MainClass</mainClass>
+                                    <mainClass>com.temenos.t24.ksa.pdf.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

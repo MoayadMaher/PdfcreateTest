@@ -1,8 +1,6 @@
-package com.temenos.t24;
+package com.temenos.t24.ksa.pdf;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 public class Main {
     public static void main(String[] args) {
@@ -13,7 +11,7 @@ public class Main {
 
             String dummyData = createDummyData();
 
-            PDFcreator pdfCreator = new PDFcreator();
+            com.temenos.t24.ksa.pdf.PDFcreator pdfCreator = new PDFcreator();
 
             System.out.println("Generating PDF with dummy data...");
             String pdfPath = pdfCreator.createPDF(dummyData);
@@ -36,11 +34,11 @@ public class Main {
     
     private static String createDummyData() {
 
-        String path = "test-output/tax_invoice_test.pdf";
+        String path = "test-output/tax_invoice_test.new.pdf";
 
         String billDetails = "INV2025000008817467<sm>03 SEP 2025 12:25:56<sm>20240801<sm>20241001";
 
-        String customerDetails = "TAX2000141<sm><sm>Name-12000141<sm1>Name-12000141<sm>ADD2000141 ADD2000141<sm1>EMPTY<sm>Town-country2000141<sm1>Town-country2000141<sm>JORDAN<sm1>EMPTY";
+        String customerDetails = "TAX2000141<sm><sm>Mohammad Najar<sm1>محمد النجار<sm>Baghdad Test<sm1>بغداد العرصاات<sm>Baghdad<sm1>بغداد<sm>JORDAN<sm1>العراق";
 
         String taxDetails = "20240403<sm>ELCK20240005 رسوم تبليغ<sm1>EMPTY<sm>1000<sm>1<sm><sm>1000<sm>15<sm>150<sm>1150<vm>20240403<sm>ELCK20240005 البريد<sm1>EMPTY<sm>21<sm>1<sm><sm>21<sm>15<sm>3.15<sm>24.15<vm>20240403<sm>ELCK20240005 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240104<sm>ELCK20240005 رسوم البريد السريع<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240104<sm>ELCK20240005 عمولة تدقيق<sm1>EMPTY<sm>2812.5<sm>1<sm><sm>2812.5<sm>15<sm>421.88<sm>3234.38<vm>20240104<sm>ELCK20240005 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240317<sm>ELCK20240008 رسوم تبليغ<sm1>EMPTY<sm>1000<sm>1<sm><sm>1000<sm>15<sm>150<sm>1150<vm>20240317<sm>ELCK20240008 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5";
         String totalDetails = "5433.5<sm>0<sm>815.03<sm>6248.53";
