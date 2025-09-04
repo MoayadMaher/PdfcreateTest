@@ -10,23 +10,17 @@ public class Main {
         System.out.println("=================================");
         
         try {
-            // Create test directories if they don't exist
-            createTestDirectories();
-            
-            // Create dummy data for testing
+
             String dummyData = createDummyData();
-            
-            // Initialize PdfCreator
-            PdfCreator pdfCreator = new PdfCreator();
-            
-            // Generate PDF
+
+            PDFcreator pdfCreator = new PDFcreator();
+
             System.out.println("Generating PDF with dummy data...");
-            String pdfPath = pdfCreator.createPdf(dummyData);
+            String pdfPath = pdfCreator.createPDF(dummyData);
             
             System.out.println("PDF generated successfully!");
             System.out.println("PDF location: " + pdfPath);
-            
-            // Check if file exists
+
             File pdfFile = new File(pdfPath);
             if (pdfFile.exists()) {
                 System.out.println("File size: " + pdfFile.length() + " bytes");
@@ -40,81 +34,22 @@ public class Main {
         }
     }
     
-    private static void createTestDirectories() throws Exception {
-        // Create test directories
-        String[] dirs = {
-            "test-output",
-            "test-resources",
-            "test-resources/fonts",
-            "test-resources/images"
-        };
-        
-        for (String dir : dirs) {
-            Files.createDirectories(Paths.get(dir));
-        }
-        
-        System.out.println("Test directories created successfully");
-    }
-    
     private static String createDummyData() {
-        // Format: path<fm>billDetails<fm>customerDetails<fm>taxDetails<fm>totalDetails<fm>ibanDetails<fm>fontPath<fm>logoPath<fm>footerPath
-        
+
         String path = "test-output/tax_invoice_test.pdf";
-        
-        // Bill Details: Invoice Number, Invoice Date, Service Start Date, Service End Date
-        String billDetails = "INV-2024-001<sm>20241201<sm>20241101<sm>20241130";
-        
-        // Customer Details: VAT Number, Customer ID, Name (English/Arabic), Address (English/Arabic), City (English/Arabic), Country (English/Arabic)
-        String customerDetails = "123456789<sm>CUST001<sm>ABC Company Ltd<sm1>شركة أي بي سي المحدودة<sm>123 Business Street, Dubai<sm1>شارع الأعمال 123، دبي<sm>Dubai<sm1>دبي<sm>UAE<sm1>الإمارات العربية المتحدة";
-        
-        // Tax Details: Multiple items with description, unit price, quantity, discount, total, tax rate, tax amount, total price
-        // Format: SupplyDate<sm1>Description<sm2>ArabicDescription<sm1>UnitPrice<sm>Quantity<sm>Discount<sm>TotalExcludingTax<sm>TaxRate<sm>TaxAmount<sm>TotalPrice
-        // Each item is separated by <sm> at the end
-        String taxItem1 = "20241101<sm1>Internet Service<sm2>خدمة الإنترنت<sm1>100.00<sm>1<sm>0.00<sm>100.00<sm>5.00<sm>5.00<sm>105.00";
-        String taxItem2 = "20241101<sm1>Phone Service<sm2>خدمة الهاتف<sm1>50.00<sm>1<sm>0.00<sm>50.00<sm>5.00<sm>2.50<sm>52.50";
-        String taxDetails = taxItem1 + "<sm>" + taxItem2;
-        
-        // Total Details: Total excluding VAT, Total Discount, Total VAT, Total including VAT
-        String totalDetails = "150.00<sm>0.00<sm>7.50<sm>157.50";
-        
-        // IBAN Details: VAT Registration Number, IBAN Number
-        String ibanDetails = "VAT123456789<sm>AE123456789012345678901";
-        
-        // Resource paths
-        String fontPath = "/System/Library/Fonts/Arial Unicode.ttf"; // Use system font
-        String logoPath = "test-resources/images/logo.png";
-        String footerPath = "test-resources/images/footer.png";
-        
-        // Create dummy image files if they don't exist
-        createDummyImageFile(logoPath);
-        createDummyImageFile(footerPath);
+
+        String billDetails = "INV2025000008817467<sm>03 SEP 2025 12:25:56<sm>20240801<sm>20241001";
+
+        String customerDetails = "TAX2000141<sm><sm>Name-12000141<sm1>Name-12000141<sm>ADD2000141 ADD2000141<sm1>EMPTY<sm>Town-country2000141<sm1>Town-country2000141<sm>JORDAN<sm1>EMPTY";
+
+        String taxDetails = "20240403<sm>ELCK20240005 رسوم تبليغ<sm1>EMPTY<sm>1000<sm>1<sm><sm>1000<sm>15<sm>150<sm>1150<vm>20240403<sm>ELCK20240005 البريد<sm1>EMPTY<sm>21<sm>1<sm><sm>21<sm>15<sm>3.15<sm>24.15<vm>20240403<sm>ELCK20240005 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240104<sm>ELCK20240005 رسوم البريد السريع<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240104<sm>ELCK20240005 عمولة تدقيق<sm1>EMPTY<sm>2812.5<sm>1<sm><sm>2812.5<sm>15<sm>421.88<sm>3234.38<vm>20240104<sm>ELCK20240005 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240317<sm>ELCK20240008 رسوم تبليغ<sm1>EMPTY<sm>1000<sm>1<sm><sm>1000<sm>15<sm>150<sm>1150<vm>20240317<sm>ELCK20240008 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5";
+        String totalDetails = "5433.5<sm>0<sm>815.03<sm>6248.53";
+        String ibanDetails = "311057847300003<sm>SA9701100001232001079000";
+        String fontPath = "/Users/mmj/IdeaProjects/PdfcreateTest/test-resources/fonts/NotoNaskhArabic-Regular.ttf"; // Use system font
+        String logoPath = "/Users/mmj/IdeaProjects/PdfcreateTest/test-resources/images/logo.png";
+        String footerPath = "/Users/mmj/IdeaProjects/PdfcreateTest/test-resources/images/footer.png";
+
         
         return path + "<fm>" + billDetails + "<fm>" + customerDetails + "<fm>" + taxDetails + "<fm>" + totalDetails + "<fm>" + ibanDetails + "<fm>" + fontPath + "<fm>" + logoPath + "<fm>" + footerPath;
-    }
-    
-
-    
-    private static void createDummyImageFile(String imagePath) {
-        try {
-            File imageFile = new File(imagePath);
-            if (!imageFile.exists()) {
-                // Create a simple dummy image file (1x1 pixel PNG)
-                byte[] dummyPng = {
-                    (byte) 0x89, (byte) 0x50, (byte) 0x4E, (byte) 0x47, (byte) 0x0D, (byte) 0x0A, (byte) 0x1A, (byte) 0x0A,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x0D, (byte) 0x49, (byte) 0x48, (byte) 0x44, (byte) 0x52,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01,
-                    (byte) 0x08, (byte) 0x02, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x90, (byte) 0x77, (byte) 0x53,
-                    (byte) 0xDE, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x0C, (byte) 0x49, (byte) 0x44, (byte) 0x41,
-                    (byte) 0x54, (byte) 0x08, (byte) 0x99, (byte) 0x63, (byte) 0xF8, (byte) 0xCF, (byte) 0xCF, (byte) 0x00,
-                    (byte) 0x00, (byte) 0x03, (byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x18, (byte) 0x18, (byte) 0x00,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x49, (byte) 0x45, (byte) 0x4E, (byte) 0x44, (byte) 0xAE,
-                    (byte) 0x42, (byte) 0x60, (byte) 0x82
-                };
-                Files.write(Paths.get(imagePath), dummyPng);
-                System.out.println("Created dummy image file: " + imagePath);
-            }
-        } catch (Exception e) {
-            System.out.println("Warning: Could not create dummy image file: " + e.getMessage());
-        }
     }
 }

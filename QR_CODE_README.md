@@ -94,3 +94,4 @@ Potential improvements for the QR code feature:
 3. Custom QR code styling
 4. QR code with company logo
 5. Different QR code formats (URL, contact info, etc.)
+
