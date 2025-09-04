@@ -36,6 +36,8 @@ import com.temenos.t24.ksa.pdf.model.InvoiceData;
 import com.temenos.t24.ksa.pdf.model.InvoiceLineItem;
 import com.temenos.t24.ksa.pdf.model.InvoiceParser;
 import com.temenos.t24.ksa.pdf.util.PdfTableFactory;
+import com.temenos.t24.ksa.pdf.qr.ZatcaQRData;
+import com.temenos.t24.ksa.pdf.qr.TLVUtils;
 
 import java.io.File;
 
@@ -83,7 +85,15 @@ public class PDFcreator {
             Document document = new Document(pdfDocument);
 
 
-            String qrContent = "==wMA4MC1jEVQxNTozMDowMFoEBzEwMDAuMDAFByN0wNC0MzUwMDAwMwMUMjAyMi5yZHMCDzMxMDEyMjM29JzIFJlY2AQxC";
+
+            ZatcaQRData qrData = new ZatcaQRData();
+            // Use the bank name or seller name you want encoded
+            qrData.sellerName = "National Bank of Iraq";
+            qrData.vatNumber  = data.iban.taxRegistrationNumber;          // seller’s VAT registration
+            qrData.timestamp  = convertDateTimeToIso(data.header.invoiceDateTime);
+            qrData.invoiceTotalWithVat = data.totals.amountIncludesVat;
+            qrData.vatTotal   = data.totals.totalVat;
+            String qrContent  = TLVUtils.generateBase64TLV(qrData);
             BarcodeQRCode qrCode = new BarcodeQRCode(qrContent);
             PdfFormXObject qrObject = qrCode.createFormXObject(pdfDocument);
             Image qrImage = new Image(qrObject);
@@ -140,6 +150,19 @@ public class PDFcreator {
         }
 
         return path;
+    }
+
+    // Convert "dd MMM yyyy HH:mm:ss" to "yyyy-MM-ddTHH:mm:ssZ"
+    private static String convertDateTimeToIso(String invoiceDateTime) {
+        SimpleDateFormat inputFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss");
+        SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        try {
+            Date date = inputFormat.parse(invoiceDateTime);
+            return outputFormat.format(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return invoiceDateTime;
     }
 
     static class PdfEventHandler implements IEventHandler {
