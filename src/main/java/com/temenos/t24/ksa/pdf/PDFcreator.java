@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.io.font.PdfEncodings;
@@ -155,7 +156,9 @@ public class PDFcreator {
     // Convert "dd MMM yyyy HH:mm:ss" to "yyyy-MM-ddTHH:mm:ssZ"
     private static String convertDateTimeToIso(String invoiceDateTime) {
         SimpleDateFormat inputFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss");
+        inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        outputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
             Date date = inputFormat.parse(invoiceDateTime);
             return outputFormat.format(date);
