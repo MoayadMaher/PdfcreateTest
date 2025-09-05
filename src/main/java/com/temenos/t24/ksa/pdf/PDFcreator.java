@@ -71,9 +71,8 @@ public class PDFcreator {
             System.out.println("Using built-in sRGB ICC profile");
             System.out.println("===================================================");
 
-            // Load the provided font and make sure it's embedded so PDF/A validation doesn't
-            // complain about missing standard fonts like Helvetica.
-            PdfFont pdfFont = PdfFontFactory.createFont(arabicFontPath, PdfEncodings.IDENTITY_H, true);
+
+            PdfFont pdfFont = PdfFontFactory.createFont(arabicFontPath, PdfEncodings.IDENTITY_H);
 
             // ---- PDF/A setup (one document only) ----
             PdfOutputIntent oi = new PdfOutputIntent(
