@@ -6,8 +6,11 @@ import com.temenos.t24.ksa.pdf.qr.TLVUtils;
 import com.temenos.t24.ksa.pdf.qr.ZatcaQRData;
 import com.temenos.t24.ksa.pdf.util.PdfTableFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.awt.color.ICC_Profile;
+import java.awt.color.ColorSpace;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -53,7 +56,8 @@ public class PDFcreator {
         String logoPath = data.logoPath;
         String footerPath = data.footerPath;
 
-        try (InputStream icc = PDFcreator.class.getResourceAsStream("/color/Coated_Fogra39L_VIGC_300.icc")) {
+        ICC_Profile profile = ICC_Profile.getInstance(ColorSpace.CS_sRGB);
+        try (InputStream icc = new ByteArrayInputStream(profile.getData())) {
 
             // Basic diagnostics (you said to keep logs until server rollout)
             System.out.println("===================================================");
@@ -64,22 +68,21 @@ public class PDFcreator {
                 System.out.println("File readable? " + f.canRead());
                 System.out.println("---------------------------------------------------");
             }
-            System.out.println("ICC from resources present? " + (icc != null));
+            System.out.println("Using built-in sRGB ICC profile");
             System.out.println("===================================================");
 
-            if (icc == null) {
-                throw new IllegalStateException("ICC profile not found at /color/Coated_Fogra39L_VIGC_300.icc");
-            }
-
-            PdfFont pdfFont = PdfFontFactory.createFont(arabicFontPath, PdfEncodings.IDENTITY_H);
+            // Load the provided font and make sure it's embedded so PDF/A validation doesn't
+            // complain about missing standard fonts like Helvetica.
+            PdfFont pdfFont = PdfFontFactory.createFont(arabicFontPath, PdfEncodings.IDENTITY_H, true);
 
             // ---- PDF/A setup (one document only) ----
             PdfOutputIntent oi = new PdfOutputIntent(
-                    "sRGB", "", "http://www.color.org", "Coated_Fogra39L_VIGC_300.icc", icc);
+                    "sRGB IEC61966-2.1", "", "http://www.color.org", "sRGB IEC61966-2.1", icc);
 
             PdfWriter writer = new PdfWriter(path);
             PdfADocument pdf = new PdfADocument(writer, PdfAConformanceLevel.PDF_A_3B, oi);
             Document document = new Document(pdf);
+            document.setFont(pdfFont);
 
             // ---- Build ZATCA QR (Phase I TLV) and add to PDF ----
             ZatcaQRData qrData = new ZatcaQRData();
