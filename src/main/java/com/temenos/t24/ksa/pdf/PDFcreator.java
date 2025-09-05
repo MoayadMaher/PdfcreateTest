@@ -71,6 +71,7 @@ public class PDFcreator {
             System.out.println("Using built-in sRGB ICC profile");
             System.out.println("===================================================");
 
+
             PdfFont pdfFont = PdfFontFactory.createFont(arabicFontPath, PdfEncodings.IDENTITY_H);
 
             // ---- PDF/A setup (one document only) ----
@@ -80,6 +81,7 @@ public class PDFcreator {
             PdfWriter writer = new PdfWriter(path);
             PdfADocument pdf = new PdfADocument(writer, PdfAConformanceLevel.PDF_A_3B, oi);
             Document document = new Document(pdf);
+            document.setFont(pdfFont);
 
             // ---- Build ZATCA QR (Phase I TLV) and add to PDF ----
             ZatcaQRData qrData = new ZatcaQRData();
