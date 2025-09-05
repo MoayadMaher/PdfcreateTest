@@ -1,47 +1,37 @@
 package com.temenos.t24.ksa.pdf;
 
+import com.temenos.t24.ksa.pdf.model.InvoiceData;
+import com.temenos.t24.ksa.pdf.model.InvoiceParser;
+import com.temenos.t24.ksa.pdf.qr.TLVUtils;
+import com.temenos.t24.ksa.pdf.qr.ZatcaQRData;
+import com.temenos.t24.ksa.pdf.util.PdfTableFactory;
+
+import java.io.File;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.TimeZone;
 
-import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.barcodes.BarcodeQRCode;
 import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
-import com.itextpdf.kernel.colors.Color;
 import com.itextpdf.kernel.events.Event;
 import com.itextpdf.kernel.events.IEventHandler;
 import com.itextpdf.kernel.events.PdfDocumentEvent;
+import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.Rectangle;
-import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfAConformanceLevel;   // correct package
+import com.itextpdf.kernel.pdf.PdfOutputIntent;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
 import com.itextpdf.layout.Document;
-import com.itextpdf.layout.borders.*;
-import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.properties.*;
-import com.itextpdf.barcodes.BarcodeQRCode;
-import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
-
-import com.ibm.icu.text.Bidi;
-import com.ibm.icu.text.ArabicShaping;
-import com.ibm.icu.text.ArabicShapingException;
-import com.temenos.t24.ksa.pdf.model.InvoiceData;
-import com.temenos.t24.ksa.pdf.model.InvoiceLineItem;
-import com.temenos.t24.ksa.pdf.model.InvoiceParser;
-import com.temenos.t24.ksa.pdf.util.PdfTableFactory;
-import com.temenos.t24.ksa.pdf.qr.ZatcaQRData;
-import com.temenos.t24.ksa.pdf.qr.TLVUtils;
-
-import java.io.File;
-
+import com.itextpdf.layout.properties.HorizontalAlignment;
+import com.itextpdf.pdfa.PdfADocument;
 
 public class PDFcreator {
 
@@ -63,58 +53,65 @@ public class PDFcreator {
         String logoPath = data.logoPath;
         String footerPath = data.footerPath;
 
+        try (InputStream icc = PDFcreator.class.getResourceAsStream("/color/Coated_Fogra39L_VIGC_300.icc")) {
 
-        try {
-
-            // TODO remove this for loop check this just to check the availability
+            // Basic diagnostics (you said to keep logs until server rollout)
             System.out.println("===================================================");
-            File[] filesToCheck = {new File(logoPath), new File(footerPath), new File(arabicFontPath)};
-            for (int i = 0; i < 3; i++) {
-                System.out.println("File path = " + filesToCheck[i].getAbsolutePath());
-                System.out.println("File exists? " + filesToCheck[i].exists());
-                System.out.println("File readable? " + filesToCheck[i].canRead());
-                System.out.println("===================================================");
+            File[] filesToCheck = { new File(logoPath), new File(footerPath), new File(arabicFontPath) };
+            for (File f : filesToCheck) {
+                System.out.println("File path = " + f.getAbsolutePath());
+                System.out.println("File exists? " + f.exists());
+                System.out.println("File readable? " + f.canRead());
+                System.out.println("---------------------------------------------------");
+            }
+            System.out.println("ICC from resources present? " + (icc != null));
+            System.out.println("===================================================");
+
+            if (icc == null) {
+                throw new IllegalStateException("ICC profile not found at /color/Coated_Fogra39L_VIGC_300.icc");
             }
 
-            PdfFont pdfFont = PdfFontFactory.createFont(
-                    arabicFontPath,
-                    PdfEncodings.IDENTITY_H
-            );
+            PdfFont pdfFont = PdfFontFactory.createFont(arabicFontPath, PdfEncodings.IDENTITY_H);
 
-            PdfWriter pdfWritter = new PdfWriter(path);
-            PdfDocument pdfDocument = new PdfDocument(pdfWritter);
-            Document document = new Document(pdfDocument);
+            // ---- PDF/A setup (one document only) ----
+            PdfOutputIntent oi = new PdfOutputIntent(
+                    "sRGB", "", "http://www.color.org", "Coated_Fogra39L_VIGC_300.icc", icc);
 
+            PdfWriter writer = new PdfWriter(path);
+            PdfADocument pdf = new PdfADocument(writer, PdfAConformanceLevel.PDF_A_3B, oi);
+            Document document = new Document(pdf);
 
-
+            // ---- Build ZATCA QR (Phase I TLV) and add to PDF ----
             ZatcaQRData qrData = new ZatcaQRData();
-            // Use the bank name or seller name you want encoded
             qrData.sellerName = "National Bank of Iraq";
             qrData.vatNumber  = data.iban.taxRegistrationNumber;          // seller’s VAT registration
             qrData.timestamp  = convertDateTimeToIso(data.header.invoiceDateTime);
             qrData.invoiceTotalWithVat = data.totals.amountIncludesVat;
-            qrData.vatTotal   = data.totals.totalVat;
-            String qrContent  = TLVUtils.generateBase64TLV(qrData);
+            qrData.vatTotal = data.totals.totalVat;
+
+            String qrContent = TLVUtils.generateBase64TLV(qrData);
             BarcodeQRCode qrCode = new BarcodeQRCode(qrContent);
-            PdfFormXObject qrObject = qrCode.createFormXObject(pdfDocument);
-            Image qrImage = new Image(qrObject);
-            qrImage.setWidth(100);
-            qrImage.setHeight(100);
-            qrImage.setFixedPosition(1, 36, 730);
+
+
+            PdfFormXObject qrObject = qrCode.createFormXObject(pdf);
+            Image qrImage = new Image(qrObject)
+                    .setWidth(100)
+                    .setHeight(100)
+                    .setFixedPosition(1, 36, 730);
             document.add(qrImage);
 
             System.out.println("tables creation started");
 
-            Table header      = PdfTableFactory.createHeaderTable(pdfFont, logoPath);
-            Table infoHeader  = PdfTableFactory.createInfoHeaderTable(data, pdfFont);
-            Table summary     = PdfTableFactory.createInvoiceSummaryTable(data, pdfFont);
-            Table customer    = PdfTableFactory.createCustomerDetailsTable(data, pdfFont);
-            Table lineItems   = PdfTableFactory.createLineItemsTable(data, pdfFont);
-            Table totals      = PdfTableFactory.createTotalsTable(data, pdfFont);
+            Table header = PdfTableFactory.createHeaderTable(pdfFont, logoPath);
+            Table infoHeader = PdfTableFactory.createInfoHeaderTable(data, pdfFont);
+            Table summary = PdfTableFactory.createInvoiceSummaryTable(data, pdfFont);
+            Table customer = PdfTableFactory.createCustomerDetailsTable(data, pdfFont);
+            Table lineItems = PdfTableFactory.createLineItemsTable(data, pdfFont);
+            Table totals = PdfTableFactory.createTotalsTable(data, pdfFont);
 
             System.out.println("tables creation done");
 
-            // then add them to the document
+            // Add tables
             document.add(header);
             document.add(qrImage);
             document.add(infoHeader);
@@ -123,21 +120,23 @@ public class PDFcreator {
             document.add(lineItems);
             document.add(totals);
 
+            // Footer & event handling must also use the same pdf
             PdfEventHandler eventHandler = new PdfEventHandler();
-            pdfDocument.addEventHandler(PdfDocumentEvent.END_PAGE, eventHandler);
-            Rectangle pageSize = pdfDocument.getLastPage().getPageSize();
+            pdf.addEventHandler(PdfDocumentEvent.END_PAGE, eventHandler);
+
+            Rectangle pageSize = pdf.getLastPage().getPageSize();
             float x = pageSize.getLeft() + 36;
             float y = pageSize.getBottom() - 20;
-            String imgFooter = footerPath;
-            ImageData dataFooter = ImageDataFactory.create(imgFooter);
+
+            ImageData dataFooter = ImageDataFactory.create(footerPath);
             Image imageFooter = new Image(dataFooter);
             imageFooter.setMarginTop(20F);
-            imageFooter.setFixedPosition(pdfDocument.getPageNumber(pdfDocument.getLastPage()), x, y);
+            imageFooter.setFixedPosition(pdf.getPageNumber(pdf.getLastPage()), x, y);
             imageFooter.setAutoScale(true);
             imageFooter.setHorizontalAlignment(HorizontalAlignment.CENTER);
             document.add(imageFooter);
-            document.close();
 
+            document.close();
             System.out.println("doc. creation is done");
 
         } catch (Exception e) {
@@ -171,8 +170,7 @@ public class PDFcreator {
     static class PdfEventHandler implements IEventHandler {
         @Override
         public void handleEvent(Event event) {
-
+            // currently empty (kept for parity with previous behavior)
         }
     }
-
 }
