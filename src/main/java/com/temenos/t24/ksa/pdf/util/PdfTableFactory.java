@@ -9,8 +9,7 @@ import java.util.List;
 import com.itextpdf.barcodes.BarcodeQRCode;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
-import com.itextpdf.kernel.colors.Color;
-import com.itextpdf.kernel.colors.DeviceCmyk;
+import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
@@ -114,7 +113,7 @@ public final class PdfTableFactory {
                         .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
                         .setTextAlignment(TextAlignment.CENTER))
                 .setPadding(0F)
-                .setBackgroundColor(new DeviceCmyk(0.278f, 0.016f, 0.000f, 0.012f)));
+                .setBackgroundColor(new DeviceRgb(0.71f, 0.972f, 0.988f)));
 
         // Invoice number
         table.addCell(new Cell().add(new Paragraph("Invoice Number")).setFontSize(8F));
@@ -167,7 +166,7 @@ public final class PdfTableFactory {
                 .add(new Paragraph("Customer Details"))
                 .setFontSize(10F)
                 .setTextAlignment(TextAlignment.LEFT)
-                .setBackgroundColor(new DeviceCmyk(0.278f, 0.016f, 0.000f, 0.012f))
+                .setBackgroundColor(new DeviceRgb(0.71f, 0.972f, 0.988f))
                 .setVerticalAlignment(VerticalAlignment.MIDDLE)
                 .setBorderRight(Border.NO_BORDER));
 
@@ -179,7 +178,7 @@ public final class PdfTableFactory {
                                 .setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
                                 .setTextAlignment(TextAlignment.RIGHT)
                                 .setBorderLeft(Border.NO_BORDER))
-                .setBackgroundColor(new DeviceCmyk(0.278f, 0.016f, 0.000f, 0.012f)));
+                .setBackgroundColor(new DeviceRgb(0.71f, 0.972f, 0.988f)));
 
         // Name row
         table.addCell(new Cell(2, 0).add(new Paragraph("Name")).setFontSize(8F));
@@ -309,76 +308,76 @@ public final class PdfTableFactory {
         // English column headers
         table.addCell(new Cell().add(new Paragraph("Supply Date")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph("Description")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph("Unit Price")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph("QTY")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph("Disc.")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph("Total excluding Tax")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph("Rate")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph("Tax Amount")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph("Total Price")).setFontSize(8F)
                 .setTextAlignment(TextAlignment.CENTER).setBorderBottom(Border.NO_BORDER)
-                .setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         // Arabic column headers
         table.addCell(new Cell().add(new Paragraph(processArabic("تاريخ الخدمة"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph(processArabic("وصف الخدمة"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph(processArabic("سعر الوحدة"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph(processArabic("الكمية"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph(processArabic("الخصم"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph(processArabic("الإجمالي باستثناء الضريبة"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph(processArabic("النسبة"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph(processArabic("مبلغ الضريبة"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         table.addCell(new Cell().add(new Paragraph(processArabic("السعر الكلي"))
                 .setFontSize(8F).setFont(arabicFont).setBaseDirection(BaseDirection.RIGHT_TO_LEFT)
-                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceCmyk(0.178f, 0.008f, 0.000f, 0.031f)));
+                .setTextAlignment(TextAlignment.CENTER)).setBackgroundColor(new DeviceRgb(0.791f, 0.961f, 0.969f)));
 
         // Rows for each invoice line item
         for (InvoiceLineItem item : data.lineItems) {
