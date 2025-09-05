@@ -2,7 +2,7 @@ package com.temenos.t24.ksa.pdf.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.net.MalformedURLException;
+import com.itextpdf.io.exceptions.IOException;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +31,7 @@ public class PdfTableFactoryTest {
     @Test
     public void createHeaderTableInvalidLogoPathThrows() throws Exception {
         PdfFont font = PdfFontFactory.createFont(StandardFonts.HELVETICA);
-        assertThrows(MalformedURLException.class,
+        assertThrows(IOException.class,
                 () -> PdfTableFactory.createHeaderTable(font, "bad://path"));
     }
 }
