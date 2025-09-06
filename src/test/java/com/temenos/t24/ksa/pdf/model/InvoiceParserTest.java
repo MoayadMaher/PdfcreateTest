@@ -37,7 +37,8 @@ public class InvoiceParserTest {
                 ""
         );
 
-        assertThrows(ArrayIndexOutOfBoundsException.class, () -> InvoiceParser.parse(args));
+        // With security improvements, we now properly validate input format
+        assertThrows(IllegalArgumentException.class, () -> InvoiceParser.parse(args));
     }
 }
 
