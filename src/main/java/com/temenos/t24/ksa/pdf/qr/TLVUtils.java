@@ -12,10 +12,15 @@ public final class TLVUtils {
         if (tag < 1 || tag > 255) {
             throw new IllegalArgumentException("Tag out of range: " + tag);
         }
-        byte[] valueBytes = value != null ? value.getBytes(StandardCharsets.UTF_8) : new byte[0];
+        
+        // Handle null values gracefully
+        byte[] valueBytes = (value != null && !value.isEmpty()) ? 
+            value.getBytes(StandardCharsets.UTF_8) : new byte[0];
+            
         if (valueBytes.length > 255) {
             throw new IllegalArgumentException("TLV value exceeds 255 bytes for tag " + tag);
         }
+        
         byte[] tlv = new byte[2 + valueBytes.length];
         tlv[0] = (byte) tag;
         tlv[1] = (byte) valueBytes.length;
@@ -42,6 +47,9 @@ public final class TLVUtils {
 
     /** Public API kept as-is: Base64 of the TLV bytes. */
     public static String generateBase64TLV(ZatcaQRData data) {
+        if (data == null) {
+            throw new IllegalArgumentException("ZatcaQRData cannot be null");
+        }
         return Base64.getEncoder().encodeToString(generateTLVBytes(data));
     }
 }

@@ -43,9 +43,9 @@ public class Main {
         String taxDetails = "20240403<sm>ELCK20240005 رسوم تبليغ<sm1>EMPTY<sm>1000<sm>1<sm><sm>1000<sm>15<sm>150<sm>1150<vm>20240403<sm>ELCK20240005 البريد<sm1>EMPTY<sm>21<sm>1<sm><sm>21<sm>15<sm>3.15<sm>24.15<vm>20240403<sm>ELCK20240005 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240104<sm>ELCK20240005 رسوم البريد السريع<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240104<sm>ELCK20240005 عمولة تدقيق<sm1>EMPTY<sm>2812.5<sm>1<sm><sm>2812.5<sm>15<sm>421.88<sm>3234.38<vm>20240104<sm>ELCK20240005 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5<vm>20240317<sm>ELCK20240008 رسوم تبليغ<sm1>EMPTY<sm>1000<sm>1<sm><sm>1000<sm>15<sm>150<sm>1150<vm>20240317<sm>ELCK20240008 رسوم سويفت<sm1>EMPTY<sm>150<sm>1<sm><sm>150<sm>15<sm>22.5<sm>172.5";
         String totalDetails = "5433.5<sm>0<sm>815.03<sm>6248.53";
         String ibanDetails = "311057847300003<sm>SA9701100001232001079000";
-        String fontPath = "/Users/mmj/IdeaProjects/PdfcreateTest/test-resources/fonts/NotoNaskhArabic-Regular.ttf"; // Use system font
-        String logoPath = "/Users/mmj/IdeaProjects/PdfcreateTest/test-resources/images/logo.png";
-        String footerPath = "/Users/mmj/IdeaProjects/PdfcreateTest/test-resources/images/footer.png";
+        String fontPath = "test-resources/fonts/NotoNaskhArabic-Regular.ttf";
+        String logoPath = "test-resources/images/logo.png";
+        String footerPath = "test-resources/images/footer.png";
 
         
         return path + "<fm>" + billDetails + "<fm>" + customerDetails + "<fm>" + taxDetails + "<fm>" + totalDetails + "<fm>" + ibanDetails + "<fm>" + fontPath + "<fm>" + logoPath + "<fm>" + footerPath;

@@ -15,8 +15,17 @@ public final class InvoiceParser {
     }
 
     public static InvoiceData parse(String args) {
+        if (args == null || args.trim().isEmpty()) {
+            throw new IllegalArgumentException("Input arguments cannot be null or empty");
+        }
+        
         InvoiceData data = new InvoiceData();
         String[] argsArray = args.split("<fm>");
+        
+        if (argsArray.length < 6) {
+            throw new IllegalArgumentException("Invalid input format: requires at least 6 fields separated by <fm>");
+        }
+        
         data.path = argsArray[0];
 
         String[] taxBillDetailsArr = argsArray[1].split("<sm>");
@@ -90,15 +99,23 @@ public final class InvoiceParser {
         for (String itemStr : taxDetailsArrList) {
             if (itemStr == null || itemStr.isEmpty()) continue;
             String[] taxDetailsArr = itemStr.split("<sm>");
+            
+            if (taxDetailsArr.length < 2) {
+                // Skip malformed line items that don't have minimum required fields
+                continue;
+            }
+            
             InvoiceLineItem item = new InvoiceLineItem();
             // taxDetailsArr[0] = supply date (yyyyMMdd)
             item.supplyDate = taxDetailsArr.length > 0 ? taxDetailsArr[0] : null;
 
-            // InvoiceParser.java (inside the line-items loop)
-            String[] descArr = taxDetailsArr[1].split("<sm1>");
-            // first part is Arabic, second part (if any) is English
-            item.arabicDescription = descArr.length > 0 ? descArr[0] : null;
-            item.englishDescription         = descArr.length > 1 ? descArr[1] : null;
+            // Parse description safely
+            if (taxDetailsArr.length > 1) {
+                String[] descArr = taxDetailsArr[1].split("<sm1>");
+                // first part is Arabic, second part (if any) is English
+                item.arabicDescription = descArr.length > 0 ? descArr[0] : null;
+                item.englishDescription = descArr.length > 1 ? descArr[1] : null;
+            }
 
             item.unitPrice         = taxDetailsArr.length > 2 ? taxDetailsArr[2] : null;
             item.quantity          = taxDetailsArr.length > 3 ? taxDetailsArr[3] : null;

@@ -39,6 +39,10 @@ import com.itextpdf.pdfa.PdfADocument;
 public class PDFcreator {
 
     public static String createPDF(String args) {
+        if (args == null || args.trim().isEmpty()) {
+            throw new IllegalArgumentException("Input arguments cannot be null or empty");
+        }
+        
         // Convert the raw string to your data model
         // TODO remove this print statement
         System.out.println("Received args: " + args);
@@ -47,14 +51,17 @@ public class PDFcreator {
     }
 
     public static String createPDF(InvoiceData data) {
+        if (data == null) {
+            throw new IllegalArgumentException("InvoiceData cannot be null");
+        }
 
         // TODO remove this print statement
         System.out.println("inputed data" + data);
 
-        String path = data.path;
-        String arabicFontPath = data.arabicFontPath;
-        String logoPath = data.logoPath;
-        String footerPath = data.footerPath;
+        String path = validateAndSanitizePath(data.path, "Output PDF path");
+        String arabicFontPath = validateAndSanitizePath(data.arabicFontPath, "Arabic font path");
+        String logoPath = validateAndSanitizePath(data.logoPath, "Logo path");
+        String footerPath = validateAndSanitizePath(data.footerPath, "Footer path");
 
         ICC_Profile profile = ICC_Profile.getInstance(ColorSpace.CS_sRGB);
         try (InputStream icc = new ByteArrayInputStream(profile.getData())) {
@@ -141,14 +148,24 @@ public class PDFcreator {
             document.close();
             System.out.println("doc. creation is done");
 
-        } catch (Exception e) {
+        } catch (SecurityException e) {
+            System.err.println("Security error: " + e.getMessage());
+            throw e; // Re-throw security exceptions
+        } catch (IllegalArgumentException e) {
+            System.err.println("Invalid argument: " + e.getMessage());
+            throw e; // Re-throw argument validation exceptions
+        } catch (java.io.IOException e) {
+            System.err.println("File I/O error: " + e.getMessage());
             e.printStackTrace();
-            System.out.println("Exception occured " + e.getMessage());
+            throw new RuntimeException("Failed to create PDF due to file I/O error", e);
+        } catch (Exception e) {
+            System.err.println("Unexpected error during PDF creation: " + e.getMessage());
+            e.printStackTrace();
             Throwable cause = e.getCause();
             if (cause != null) {
-                System.err.println("Root cause: " + cause);
-                cause.printStackTrace();
+                System.err.println("Root cause: " + cause.getMessage());
             }
+            throw new RuntimeException("Failed to create PDF", e);
         }
 
         return path;
@@ -167,6 +184,35 @@ public class PDFcreator {
             e.printStackTrace();
         }
         return invoiceDateTime;
+    }
+
+    /**
+     * Validates and sanitizes file paths to prevent path traversal attacks and ensure file accessibility.
+     */
+    private static String validateAndSanitizePath(String filePath, String pathDescription) {
+        if (filePath == null || filePath.trim().isEmpty()) {
+            throw new IllegalArgumentException(pathDescription + " cannot be null or empty");
+        }
+        
+        String normalizedPath = filePath.trim();
+        
+        // Check for path traversal attempts
+        if (normalizedPath.contains("..") || normalizedPath.contains("//")) {
+            throw new SecurityException("Path traversal detected in " + pathDescription + ": " + normalizedPath);
+        }
+        
+        // Validate file exists and is readable (except for output path)
+        if (!pathDescription.toLowerCase().contains("output")) {
+            File file = new File(normalizedPath);
+            if (!file.exists()) {
+                throw new IllegalArgumentException(pathDescription + " does not exist: " + normalizedPath);
+            }
+            if (!file.canRead()) {
+                throw new SecurityException(pathDescription + " is not readable: " + normalizedPath);
+            }
+        }
+        
+        return normalizedPath;
     }
 
     static class PdfEventHandler implements IEventHandler {
