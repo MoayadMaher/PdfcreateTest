@@ -1,46 +1,33 @@
 package com.temenos.t24.ksa.pdf;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-
-import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.barcodes.BarcodeQRCode;
 import com.itextpdf.io.font.PdfEncodings;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
-import com.itextpdf.kernel.colors.Color;
 import com.itextpdf.kernel.events.Event;
 import com.itextpdf.kernel.events.IEventHandler;
 import com.itextpdf.kernel.events.PdfDocumentEvent;
+import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
 import com.itextpdf.layout.Document;
-import com.itextpdf.layout.borders.*;
-import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.properties.*;
-import com.itextpdf.barcodes.BarcodeQRCode;
-import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
-
-import com.ibm.icu.text.Bidi;
-import com.ibm.icu.text.ArabicShaping;
-import com.ibm.icu.text.ArabicShapingException;
+import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.temenos.t24.ksa.pdf.model.InvoiceData;
-import com.temenos.t24.ksa.pdf.model.InvoiceLineItem;
 import com.temenos.t24.ksa.pdf.model.InvoiceParser;
-import com.temenos.t24.ksa.pdf.util.PdfTableFactory;
-import com.temenos.t24.ksa.pdf.qr.ZatcaQRData;
 import com.temenos.t24.ksa.pdf.qr.TLVUtils;
+import com.temenos.t24.ksa.pdf.qr.ZatcaQRData;
+import com.temenos.t24.ksa.pdf.util.PdfTableFactory;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 
 public class PDFcreator {
@@ -86,15 +73,14 @@ public class PDFcreator {
             Document document = new Document(pdfDocument);
 
 
-
             ZatcaQRData qrData = new ZatcaQRData();
             // Use the bank name or seller name you want encoded
             qrData.sellerName = "National Bank of Iraq";
-            qrData.vatNumber  = data.iban.taxRegistrationNumber;          // seller’s VAT registration
-            qrData.timestamp  = convertDateTimeToIso(data.header.invoiceDateTime);
+            qrData.vatNumber = data.iban.taxRegistrationNumber;          // seller’s VAT registration
+            qrData.timestamp = convertDateTimeToIso(data.header.invoiceDateTime);
             qrData.invoiceTotalWithVat = data.totals.amountIncludesVat;
-            qrData.vatTotal   = data.totals.totalVat;
-            String qrContent  = TLVUtils.generateBase64TLV(qrData);
+            qrData.vatTotal = data.totals.totalVat;
+            String qrContent = TLVUtils.generateBase64TLV(qrData);
             BarcodeQRCode qrCode = new BarcodeQRCode(qrContent);
             PdfFormXObject qrObject = qrCode.createFormXObject(pdfDocument);
             Image qrImage = new Image(qrObject);
@@ -105,12 +91,12 @@ public class PDFcreator {
 
             System.out.println("tables creation started");
 
-            Table header      = PdfTableFactory.createHeaderTable(pdfFont, logoPath);
-            Table infoHeader  = PdfTableFactory.createInfoHeaderTable(data, pdfFont);
-            Table summary     = PdfTableFactory.createInvoiceSummaryTable(data, pdfFont);
-            Table customer    = PdfTableFactory.createCustomerDetailsTable(data, pdfFont);
-            Table lineItems   = PdfTableFactory.createLineItemsTable(data, pdfFont);
-            Table totals      = PdfTableFactory.createTotalsTable(data, pdfFont);
+            Table header = PdfTableFactory.createHeaderTable(pdfFont, logoPath);
+            Table infoHeader = PdfTableFactory.createInfoHeaderTable(data, pdfFont);
+            Table summary = PdfTableFactory.createInvoiceSummaryTable(data, pdfFont);
+            Table customer = PdfTableFactory.createCustomerDetailsTable(data, pdfFont);
+            Table lineItems = PdfTableFactory.createLineItemsTable(data, pdfFont);
+            Table totals = PdfTableFactory.createTotalsTable(data, pdfFont);
 
             System.out.println("tables creation done");
 

@@ -1,19 +1,10 @@
 package com.temenos.t24.ksa.pdf.util;
 
-import java.net.MalformedURLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-
-import com.itextpdf.barcodes.BarcodeQRCode;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.Color;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Image;
@@ -23,11 +14,10 @@ import com.itextpdf.layout.properties.BaseDirection;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.VerticalAlignment;
-import com.ibm.icu.text.ArabicShaping;
-import com.ibm.icu.text.ArabicShapingException;
-import com.ibm.icu.text.Bidi;
 import com.temenos.t24.ksa.pdf.model.InvoiceData;
 import com.temenos.t24.ksa.pdf.model.InvoiceLineItem;
+
+import java.net.MalformedURLException;
 
 import static com.temenos.t24.ksa.pdf.util.TextUtil.convertDate;
 import static com.temenos.t24.ksa.pdf.util.TextUtil.processArabic;

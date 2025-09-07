@@ -6,7 +6,7 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("T24 PDF Creator Test Application");
         System.out.println("=================================");
-        
+
         try {
 
             String dummyData = createDummyData();
@@ -15,7 +15,7 @@ public class Main {
 
             System.out.println("Generating PDF with dummy data...");
             String pdfPath = pdfCreator.createPDF(dummyData);
-            
+
             System.out.println("PDF generated successfully!");
             System.out.println("PDF location: " + pdfPath);
 
@@ -25,13 +25,13 @@ public class Main {
             } else {
                 System.out.println("Warning: PDF file was not created!");
             }
-            
+
         } catch (Exception e) {
             System.err.println("Error occurred: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
+
     private static String createDummyData() {
 
         String path = "test-output/tax_invoice_test.new.pdf";
@@ -47,7 +47,7 @@ public class Main {
         String logoPath = "/Users/mmj/IdeaProjects/PdfcreateTest/test-resources/images/logo.png";
         String footerPath = "/Users/mmj/IdeaProjects/PdfcreateTest/test-resources/images/footer.png";
 
-        
+
         return path + "<fm>" + billDetails + "<fm>" + customerDetails + "<fm>" + taxDetails + "<fm>" + totalDetails + "<fm>" + ibanDetails + "<fm>" + fontPath + "<fm>" + logoPath + "<fm>" + footerPath;
     }
 }
