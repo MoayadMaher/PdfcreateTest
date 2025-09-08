@@ -26,6 +26,12 @@ public class Main {
                 System.out.println("Warning: PDF file was not created!");
             }
 
+            // Also generate XML aligned with ZATCA UBL
+            System.out.println("Generating XML with dummy data...");
+            String xmlPath = XMLcreator.createXML(dummyData);
+            System.out.println("XML generated successfully!");
+            System.out.println("XML location: " + xmlPath);
+
         } catch (Exception e) {
             System.err.println("Error occurred: " + e.getMessage());
             e.printStackTrace();
