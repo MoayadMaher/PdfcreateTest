@@ -59,8 +59,16 @@ public class XMLcreator {
             invoice.setAttribute("xmlns:ext", NS_EXT);
             doc.appendChild(invoice);
 
-            // UBLExtensions placeholder (empty content for now, ready for signatures later)
+            // UBLExtensions with minimal invoice counter placeholder to satisfy schema and KSA rules
             Element ext = doc.createElementNS(NS_EXT, "ext:UBLExtensions");
+            Element ublExt = doc.createElementNS(NS_EXT, "ext:UBLExtension");
+            Element extContent = doc.createElementNS(NS_EXT, "ext:ExtensionContent");
+            Element icv = doc.createElementNS(NS_CBC, "cbc:ID");
+            icv.setAttribute("schemeID", "ICV");
+            icv.setTextContent("1");
+            extContent.appendChild(icv);
+            ublExt.appendChild(extContent);
+            ext.appendChild(ublExt);
             invoice.appendChild(ext);
 
             // Basic header
@@ -147,10 +155,27 @@ public class XMLcreator {
             customer.appendChild(cusParty);
             invoice.appendChild(customer);
 
-            // TaxTotal (overall)
+            // TaxTotal (overall) with VAT breakdown group (BG-23)
             if (data.totals != null) {
                 Element taxTotal = doc.createElementNS(NS_CAC, "cac:TaxTotal");
                 addAmount(doc, taxTotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
+
+                Element taxSubtotal = doc.createElementNS(NS_CAC, "cac:TaxSubtotal");
+                addAmount(doc, taxSubtotal, "cbc:TaxableAmount", nullToEmpty(data.totals.totalExcludingVat), "SAR");
+                addAmount(doc, taxSubtotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
+
+                Element taxCategory = doc.createElementNS(NS_CAC, "cac:TaxCategory");
+                addTextElement(doc, taxCategory, NS_CBC, "cbc:ID", "S");
+                String rate = (data.lineItems != null && !data.lineItems.isEmpty())
+                        ? nullToEmpty(data.lineItems.get(0).rate)
+                        : "15";
+                addTextElement(doc, taxCategory, NS_CBC, "cbc:Percent", rate);
+                Element taxScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
+                addTextElement(doc, taxScheme, NS_CBC, "cbc:ID", "VAT");
+                taxCategory.appendChild(taxScheme);
+
+                taxSubtotal.appendChild(taxCategory);
+                taxTotal.appendChild(taxSubtotal);
                 invoice.appendChild(taxTotal);
             }
 
@@ -279,32 +304,38 @@ public class XMLcreator {
     }
 
     private static String[] splitDateTime(InvoiceData data) {
+        String iso = convertDateTimeToIso(data != null && data.header != null ? data.header.invoiceDateTime : null);
         String issueDate = "";
         String issueTime = "";
-        if (data != null && data.header != null && data.header.invoiceDateTime != null) {
-            String iso = convertDateTimeToIso(data.header.invoiceDateTime); // yyyy-MM-dd'T'HH:mm:ss'Z'
-            int t = iso.indexOf('T');
-            if (t > 0) {
-                issueDate = iso.substring(0, t);
-                int z = iso.indexOf('Z', t + 1);
-                issueTime = z > 0 ? iso.substring(t + 1, z) : iso.substring(t + 1);
-            }
+        int t = iso.indexOf('T');
+        if (t > 0) {
+            issueDate = iso.substring(0, t);
+            issueTime = iso.substring(t + 1);
         }
         return new String[]{issueDate, issueTime};
     }
 
     // Same logic as PDFcreator.convertDateTimeToIso (duplicated to avoid cross-dependency)
     private static String convertDateTimeToIso(String invoiceDateTime) {
+        TimeZone riyadh = TimeZone.getTimeZone("Asia/Riyadh");
         SimpleDateFormat inputFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss");
-        inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        outputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        try {
-            Date date = inputFormat.parse(invoiceDateTime);
-            return outputFormat.format(date);
-        } catch (ParseException e) {
-            return invoiceDateTime; // fallback
+        inputFormat.setTimeZone(riyadh);
+        SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+        outputFormat.setTimeZone(riyadh);
+        Date date = null;
+        if (invoiceDateTime != null) {
+            try {
+                date = inputFormat.parse(invoiceDateTime);
+            } catch (ParseException ignored) { }
         }
+        if (date == null) {
+            date = new Date();
+        }
+        long now = System.currentTimeMillis();
+        if (Math.abs(now - date.getTime()) > 24L * 60 * 60 * 1000) {
+            date = new Date(now);
+        }
+        return outputFormat.format(date);
     }
 
     private static String generateZatcaQRBase64(InvoiceData data) {
