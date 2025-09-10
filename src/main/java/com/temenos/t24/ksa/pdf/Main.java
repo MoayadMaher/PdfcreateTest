@@ -42,7 +42,7 @@ public class Main {
 
         String path = "test-output/tax_invoice_test.new.pdf";
 
-        String billDetails = "INV2025000008817467<sm>03 SEP 2025 12:25:56<sm>20240801<sm>20241001";
+        String billDetails = "INV2025000008817467<sm>09 SEP 2025 12:25:56<sm>20240801<sm>20241001";
 
         String customerDetails = "TAX2000141<sm><sm>Mohammad Najar<sm1>محمد النجار<sm>Baghdad Test<sm1>بغداد العرصاات<sm>Baghdad<sm1>بغداد<sm>JORDAN<sm1>العراق";
 

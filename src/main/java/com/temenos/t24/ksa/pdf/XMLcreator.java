@@ -154,6 +154,49 @@ public class XMLcreator {
                 invoice.appendChild(taxTotal);
             }
 
+            // BR-CO-18
+            if (data.totals != null) {
+                Element fullTax = doc.createElementNS(NS_CAC, "cac:TaxTotal");
+                addAmount(doc, fullTax, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
+
+                Element subtotal  = doc.createElementNS("", "cac:Subtotal");
+
+                addAmount(doc, subtotal, "cbc:TaxableAmount", nullToEmpty(data.totals.totalExcludingVat), "SAR");
+                addAmount(doc, subtotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
+
+                Element taxCategory  = doc.createElement( "cac:TaxCategory");
+
+                Element taxCategoryId =  doc.createElementNS( NS_CBC,"cbc:ID");
+                taxCategoryId.setAttribute("schemeID", "UN/ECE 5305");
+                taxCategoryId.setAttribute("schemeAgencyID","6");
+                taxCategoryId.setTextContent("S");
+
+                Element taxCategoryPercent =  doc.createElementNS( NS_CBC,"cbc:Percent");
+                taxCategoryPercent.setTextContent("15.00");
+
+                Element taxScheme =   doc.createElement( "cac:TaxScheme");
+                Element taxSchemeId =  doc.createElementNS( NS_CBC,"cbc:ID");
+                taxSchemeId.setAttribute("schemeID", "UN/ECE 5153");
+                taxSchemeId.setAttribute("schemeAgencyID","6");
+                taxSchemeId.setTextContent("VAT");
+
+                taxScheme.appendChild(taxSchemeId);
+
+                taxCategory.appendChild(taxCategoryId);
+                taxCategory.appendChild(taxCategoryPercent);
+                taxCategory.appendChild(taxScheme);
+
+                subtotal.appendChild(taxCategory);
+
+                fullTax.appendChild(subtotal);
+
+
+                addAmount(doc, subtotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
+
+                invoice.appendChild(fullTax);
+
+            }
+
             // LegalMonetaryTotal
             if (data.totals != null) {
                 Element lmt = doc.createElementNS(NS_CAC, "cac:LegalMonetaryTotal");
