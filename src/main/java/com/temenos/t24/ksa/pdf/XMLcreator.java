@@ -3,8 +3,6 @@ package com.temenos.t24.ksa.pdf;
 import com.temenos.t24.ksa.pdf.model.InvoiceData;
 import com.temenos.t24.ksa.pdf.model.InvoiceLineItem;
 import com.temenos.t24.ksa.pdf.model.InvoiceParser;
-import com.temenos.t24.ksa.pdf.qr.TLVUtils;
-import com.temenos.t24.ksa.pdf.qr.ZatcaQRData;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,14 +17,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.UUID;
 
 /**
  * Minimal UBL 2.1 XML generator aligned with ZATCA structure.
@@ -56,50 +52,72 @@ public class XMLcreator {
             Element invoice = doc.createElementNS(NS_INVOICE, "Invoice");
             invoice.setAttribute("xmlns:cac", NS_CAC);
             invoice.setAttribute("xmlns:cbc", NS_CBC);
-            invoice.setAttribute("xmlns:ext", NS_EXT);
             doc.appendChild(invoice);
 
-            // UBLExtensions placeholder (empty content for now, ready for signatures later)
-            Element ext = doc.createElementNS(NS_EXT, "ext:UBLExtensions");
-            invoice.appendChild(ext);
-
             // Basic header
-            addTextElement(doc, invoice, NS_CBC, "cbc:ProfileID", "reporting:1.0");
             if (data.header != null) {
                 addTextElement(doc, invoice, NS_CBC, "cbc:ID", nullToEmpty(data.header.invoiceNumber));
             } else {
                 addTextElement(doc, invoice, NS_CBC, "cbc:ID", "");
             }
-            addTextElement(doc, invoice, NS_CBC, "cbc:UUID", UUID.randomUUID().toString());
 
             String[] dateTime = splitDateTime(data);
             addTextElement(doc, invoice, NS_CBC, "cbc:IssueDate", dateTime[0]);
             addTextElement(doc, invoice, NS_CBC, "cbc:IssueTime", dateTime[1]);
 
-            Element invType = doc.createElementNS(NS_CBC, "cbc:InvoiceTypeCode");
-            invType.setAttribute("name", "0200000"); // standard invoice mask commonly used
-            invType.setTextContent("388"); // 388 = Commercial invoice
-            invoice.appendChild(invType);
+            addTextElement(doc, invoice, NS_CBC, "cbc:InvoiceTypeCode", "388");
 
             addTextElement(doc, invoice, NS_CBC, "cbc:DocumentCurrencyCode", "SAR");
             addTextElement(doc, invoice, NS_CBC, "cbc:TaxCurrencyCode", "SAR");
 
-            // AdditionalDocumentReference - QR (Phase I TLV as Base64)
-            String qrBase64 = generateZatcaQRBase64(data);
-            Element adrQR = doc.createElementNS(NS_CAC, "cac:AdditionalDocumentReference");
-            addTextElement(doc, adrQR, NS_CBC, "cbc:ID", "QR");
-            Element attach = doc.createElementNS(NS_CAC, "cac:Attachment");
-            Element emb = doc.createElementNS(NS_CBC, "cbc:EmbeddedDocumentBinaryObject");
-            emb.setAttribute("mimeCode", "text/plain");
-            emb.setTextContent(qrBase64);
-            attach.appendChild(emb);
-            adrQR.appendChild(attach);
-            invoice.appendChild(adrQR);
+            // Optional: PaymentMeans
+            Element paymentMeans = doc.createElementNS(NS_CAC, "cac:PaymentMeans");
+            addTextElement(doc, paymentMeans, NS_CBC, "cbc:PaymentMeansCode", "10");
+            invoice.appendChild(paymentMeans);
 
-            // Supplier (minimal): VAT number + RegistrationName
+            // Optional: Discount (Allowance/Charge)
+            Element allowance = doc.createElementNS(NS_CAC, "cac:AllowanceCharge");
+            addTextElement(doc, allowance, NS_CBC, "cbc:ChargeIndicator", "false");
+            addTextElement(doc, allowance, NS_CBC, "cbc:AllowanceChargeReason", "discount");
+            addAmount(doc, allowance, "cbc:Amount", "0.00", "SAR");
+            Element allowanceTax = doc.createElementNS(NS_CAC, "cac:TaxCategory");
+            addTextElement(doc, allowanceTax, NS_CBC, "cbc:ID", "S");
+            addTextElement(doc, allowanceTax, NS_CBC, "cbc:Percent", "15");
+            Element allowanceScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
+            addTextElement(doc, allowanceScheme, NS_CBC, "cbc:ID", "VAT");
+            allowanceTax.appendChild(allowanceScheme);
+            allowance.appendChild(allowanceTax);
+            invoice.appendChild(allowance);
+
+            // Supplier (minimal): ID, name, address then tax/legal details
             Element supplier = doc.createElementNS(NS_CAC, "cac:AccountingSupplierParty");
             Element supParty = doc.createElementNS(NS_CAC, "cac:Party");
-            // PartyTaxScheme
+
+            // Optional identification
+            Element supId = doc.createElementNS(NS_CAC, "cac:PartyIdentification");
+            Element supIdVal = doc.createElementNS(NS_CBC, "cbc:ID");
+            supIdVal.setAttribute("schemeID", "CRN");
+            supIdVal.setTextContent("1010010000");
+            supId.appendChild(supIdVal);
+            supParty.appendChild(supId);
+
+            // Party name
+            Element supName = doc.createElementNS(NS_CAC, "cac:PartyName");
+            addTextElement(doc, supName, NS_CBC, "cbc:Name", "Example Supplier Ltd");
+            supParty.appendChild(supName);
+
+            // Address comes before tax/legal
+            Element supAddress = doc.createElementNS(NS_CAC, "cac:PostalAddress");
+            addTextElement(doc, supAddress, NS_CBC, "cbc:StreetName", "Prince Sultan Street");
+            addTextElement(doc, supAddress, NS_CBC, "cbc:BuildingNumber", "2322");
+            addTextElement(doc, supAddress, NS_CBC, "cbc:CityName", "Riyadh");
+            addTextElement(doc, supAddress, NS_CBC, "cbc:PostalZone", "11564");
+            Element supCountry = doc.createElementNS(NS_CAC, "cac:Country");
+            addTextElement(doc, supCountry, NS_CBC, "cbc:IdentificationCode", "SA");
+            supAddress.appendChild(supCountry);
+            supParty.appendChild(supAddress);
+
+            // Tax details
             Element supTax = doc.createElementNS(NS_CAC, "cac:PartyTaxScheme");
             addTextElement(doc, supTax, NS_CBC, "cbc:CompanyID", data.iban != null ? nullToEmpty(data.iban.taxRegistrationNumber) : "");
             Element supTaxScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
@@ -107,9 +125,9 @@ public class XMLcreator {
             supTax.appendChild(supTaxScheme);
             supParty.appendChild(supTax);
 
-            // PartyLegalEntity
+            // Legal entity name
             Element supLegal = doc.createElementNS(NS_CAC, "cac:PartyLegalEntity");
-            addTextElement(doc, supLegal, NS_CBC, "cbc:RegistrationName", "National Bank of Iraq");
+            addTextElement(doc, supLegal, NS_CBC, "cbc:RegistrationName", "Example Supplier Ltd");
             supParty.appendChild(supLegal);
 
             supplier.appendChild(supParty);
@@ -119,18 +137,23 @@ public class XMLcreator {
             Element customer = doc.createElementNS(NS_CAC, "cac:AccountingCustomerParty");
             Element cusParty = doc.createElementNS(NS_CAC, "cac:Party");
 
-            // PostalAddress (combine Arabic | English like example, if available)
-            Element postal = doc.createElementNS(NS_CAC, "cac:PostalAddress");
-            addTextElement(doc, postal, NS_CBC, "cbc:StreetName",
-                    joinBiLang(getOrEmpty(() -> data.customer.arabicAddress), getOrEmpty(() -> data.customer.englishAddress)));
-            addTextElement(doc, postal, NS_CBC, "cbc:CityName",
-                    joinBiLang(getOrEmpty(() -> data.customer.arabicCity), getOrEmpty(() -> data.customer.englishCity)));
-            Element country = doc.createElementNS(NS_CAC, "cac:Country");
-            addTextElement(doc, country, NS_CBC, "cbc:IdentificationCode", "SA");
-            postal.appendChild(country);
-            cusParty.appendChild(postal);
+            // Party name
+            Element cusName = doc.createElementNS(NS_CAC, "cac:PartyName");
+            addTextElement(doc, cusName, NS_CBC, "cbc:Name", "Example Customer Ltd");
+            cusParty.appendChild(cusName);
 
-            // PartyTaxScheme (customer VAT)
+            // Address before tax/legal
+            Element cusAddress = doc.createElementNS(NS_CAC, "cac:PostalAddress");
+            addTextElement(doc, cusAddress, NS_CBC, "cbc:StreetName", "Salah Al-Din Street");
+            addTextElement(doc, cusAddress, NS_CBC, "cbc:BuildingNumber", "1111");
+            addTextElement(doc, cusAddress, NS_CBC, "cbc:CityName", "Riyadh");
+            addTextElement(doc, cusAddress, NS_CBC, "cbc:PostalZone", "12222");
+            Element cusCountry = doc.createElementNS(NS_CAC, "cac:Country");
+            addTextElement(doc, cusCountry, NS_CBC, "cbc:IdentificationCode", "SA");
+            cusAddress.appendChild(cusCountry);
+            cusParty.appendChild(cusAddress);
+
+            // Tax scheme
             Element cusTax = doc.createElementNS(NS_CAC, "cac:PartyTaxScheme");
             addTextElement(doc, cusTax, NS_CBC, "cbc:CompanyID", getOrEmpty(() -> data.customer.vatNumber));
             Element cusTaxScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
@@ -138,63 +161,33 @@ public class XMLcreator {
             cusTax.appendChild(cusTaxScheme);
             cusParty.appendChild(cusTax);
 
-            // PartyLegalEntity (customer name)
+            // Legal entity
             Element cusLegal = doc.createElementNS(NS_CAC, "cac:PartyLegalEntity");
-            addTextElement(doc, cusLegal, NS_CBC, "cbc:RegistrationName",
-                    joinBiLang(getOrEmpty(() -> data.customer.arabicName), getOrEmpty(() -> data.customer.englishName)));
+            addTextElement(doc, cusLegal, NS_CBC, "cbc:RegistrationName", "Example Customer Ltd");
             cusParty.appendChild(cusLegal);
 
             customer.appendChild(cusParty);
             invoice.appendChild(customer);
 
-            // TaxTotal (overall)
+            // TaxTotal with TaxSubtotal
             if (data.totals != null) {
                 Element taxTotal = doc.createElementNS(NS_CAC, "cac:TaxTotal");
                 addAmount(doc, taxTotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
-                invoice.appendChild(taxTotal);
-            }
 
-            // BR-CO-18
-            if (data.totals != null) {
-                Element fullTax = doc.createElementNS(NS_CAC, "cac:TaxTotal");
-                addAmount(doc, fullTax, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
-
-                Element subtotal  = doc.createElementNS("", "cac:Subtotal");
-
+                Element subtotal = doc.createElementNS(NS_CAC, "cac:TaxSubtotal");
                 addAmount(doc, subtotal, "cbc:TaxableAmount", nullToEmpty(data.totals.totalExcludingVat), "SAR");
                 addAmount(doc, subtotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
 
-                Element taxCategory  = doc.createElement( "cac:TaxCategory");
-
-                Element taxCategoryId =  doc.createElementNS( NS_CBC,"cbc:ID");
-                taxCategoryId.setAttribute("schemeID", "UN/ECE 5305");
-                taxCategoryId.setAttribute("schemeAgencyID","6");
-                taxCategoryId.setTextContent("S");
-
-                Element taxCategoryPercent =  doc.createElementNS( NS_CBC,"cbc:Percent");
-                taxCategoryPercent.setTextContent("15.00");
-
-                Element taxScheme =   doc.createElement( "cac:TaxScheme");
-                Element taxSchemeId =  doc.createElementNS( NS_CBC,"cbc:ID");
-                taxSchemeId.setAttribute("schemeID", "UN/ECE 5153");
-                taxSchemeId.setAttribute("schemeAgencyID","6");
-                taxSchemeId.setTextContent("VAT");
-
-                taxScheme.appendChild(taxSchemeId);
-
-                taxCategory.appendChild(taxCategoryId);
-                taxCategory.appendChild(taxCategoryPercent);
+                Element taxCategory = doc.createElementNS(NS_CAC, "cac:TaxCategory");
+                addTextElement(doc, taxCategory, NS_CBC, "cbc:ID", "S");
+                addTextElement(doc, taxCategory, NS_CBC, "cbc:Percent", "15.00");
+                Element taxScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
+                addTextElement(doc, taxScheme, NS_CBC, "cbc:ID", "VAT");
                 taxCategory.appendChild(taxScheme);
-
                 subtotal.appendChild(taxCategory);
 
-                fullTax.appendChild(subtotal);
-
-
-                addAmount(doc, subtotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
-
-                invoice.appendChild(fullTax);
-
+                taxTotal.appendChild(subtotal);
+                invoice.appendChild(taxTotal);
             }
 
             // LegalMonetaryTotal
@@ -204,7 +197,6 @@ public class XMLcreator {
                 addAmount(doc, lmt, "cbc:TaxExclusiveAmount", nullToEmpty(data.totals.totalExcludingVat), "SAR");
                 addAmount(doc, lmt, "cbc:TaxInclusiveAmount", nullToEmpty(data.totals.amountIncludesVat), "SAR");
                 addAmount(doc, lmt, "cbc:AllowanceTotalAmount", nullToEmpty(data.totals.totalDiscount), "SAR");
-                addAmount(doc, lmt, "cbc:PrepaidAmount", "0.00", "SAR");
                 addAmount(doc, lmt, "cbc:PayableAmount", nullToEmpty(data.totals.amountIncludesVat), "SAR");
                 invoice.appendChild(lmt);
             }
@@ -218,11 +210,6 @@ public class XMLcreator {
                     addTextElement(doc, line, NS_CBC, "cbc:ID", String.valueOf(i + 1));
                     addQty(doc, line, "cbc:InvoicedQuantity", nullToEmpty(it.quantity), "PCE");
                     addAmount(doc, line, "cbc:LineExtensionAmount", nullToEmpty(it.totalExcludingTax), "SAR");
-
-                    Element lineTaxTotal = doc.createElementNS(NS_CAC, "cac:TaxTotal");
-                    addAmount(doc, lineTaxTotal, "cbc:TaxAmount", nullToEmpty(it.taxAmount), "SAR");
-                    addAmount(doc, lineTaxTotal, "cbc:RoundingAmount", nullToEmpty(it.totalPrice), "SAR");
-                    line.appendChild(lineTaxTotal);
 
                     Element item = doc.createElementNS(NS_CAC, "cac:Item");
                     // prefer Arabic like the example, fallback to English
@@ -350,19 +337,5 @@ public class XMLcreator {
         }
     }
 
-    private static String generateZatcaQRBase64(InvoiceData data) {
-        try {
-            ZatcaQRData qr = new ZatcaQRData();
-            qr.sellerName = "National Bank of Iraq";
-            qr.vatNumber = (data != null && data.iban != null) ? data.iban.taxRegistrationNumber : "";
-            qr.timestamp = data != null && data.header != null ? convertDateTimeToIso(data.header.invoiceDateTime) : "";
-            qr.invoiceTotalWithVat = data != null && data.totals != null ? data.totals.amountIncludesVat : "";
-            qr.vatTotal = data != null && data.totals != null ? data.totals.totalVat : "";
-            return TLVUtils.generateBase64TLV(qr);
-        } catch (Exception ex) {
-            // In case of invalid input, return empty to keep XML creation resilient
-            return "";
-        }
-    }
 }
 
