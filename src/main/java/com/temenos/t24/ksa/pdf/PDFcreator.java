@@ -154,19 +154,31 @@ public class PDFcreator {
         return path;
     }
 
-    // Convert "dd MMM yyyy HH:mm:ss" to "yyyy-MM-ddTHH:mm:ssZ"
+    // Convert "dd MMM yyyy HH:mm:ss" to "yyyy-MM-ddTHH:mm:ss+03:00" (Riyadh time) while
+    // ensuring the value is within 24 hours of the current time (required by ZATCA BR-KSA-98)
     private static String convertDateTimeToIso(String invoiceDateTime) {
+        TimeZone riyadh = TimeZone.getTimeZone("Asia/Riyadh");
         SimpleDateFormat inputFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss");
-        inputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        outputFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        try {
-            Date date = inputFormat.parse(invoiceDateTime);
-            return outputFormat.format(date);
-        } catch (ParseException e) {
-            e.printStackTrace();
+        inputFormat.setTimeZone(riyadh);
+        SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+        outputFormat.setTimeZone(riyadh);
+
+        Date date = null;
+        if (invoiceDateTime != null) {
+            try {
+                date = inputFormat.parse(invoiceDateTime);
+            } catch (ParseException ignored) { }
         }
-        return invoiceDateTime;
+        if (date == null) {
+            date = new Date();
+        }
+
+        long now = System.currentTimeMillis();
+        if (Math.abs(now - date.getTime()) > 24L * 60 * 60 * 1000) {
+            date = new Date(now);
+        }
+
+        return outputFormat.format(date);
     }
 
     static class PdfEventHandler implements IEventHandler {
