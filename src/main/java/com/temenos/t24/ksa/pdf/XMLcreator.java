@@ -52,18 +52,15 @@ public class XMLcreator {
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document doc = db.newDocument();
 
-            // Root element with namespace declarations
-            Element invoice = doc.createElementNS(NS_INVOICE, "Invoice");
-            invoice.setAttribute("xmlns:cac", NS_CAC);
-            invoice.setAttribute("xmlns:cbc", NS_CBC);
-            invoice.setAttribute("xmlns:ext", NS_EXT);
+            // Root element with namespace declarations per element
+            Element invoice = createElement(doc, NS_INVOICE, "Invoice");
             doc.appendChild(invoice);
 
             // UBLExtensions with minimal invoice counter placeholder to satisfy schema and KSA rules
-            Element ext = doc.createElementNS(NS_EXT, "ext:UBLExtensions");
-            Element ublExt = doc.createElementNS(NS_EXT, "ext:UBLExtension");
-            Element extContent = doc.createElementNS(NS_EXT, "ext:ExtensionContent");
-            Element icv = doc.createElementNS(NS_CBC, "cbc:ID");
+            Element ext = createElement(doc, NS_EXT, "ext:UBLExtensions");
+            Element ublExt = createElement(doc, NS_EXT, "ext:UBLExtension");
+            Element extContent = createElement(doc, NS_EXT, "ext:ExtensionContent");
+            Element icv = createElement(doc, NS_CBC, "cbc:ID");
             icv.setAttribute("schemeID", "ICV");
             icv.setTextContent("1");
             extContent.appendChild(icv);
@@ -84,7 +81,7 @@ public class XMLcreator {
             addTextElement(doc, invoice, NS_CBC, "cbc:IssueDate", dateTime[0]);
             addTextElement(doc, invoice, NS_CBC, "cbc:IssueTime", dateTime[1]);
 
-            Element invType = doc.createElementNS(NS_CBC, "cbc:InvoiceTypeCode");
+            Element invType = createElement(doc, NS_CBC, "cbc:InvoiceTypeCode");
             invType.setAttribute("name", "0200000"); // standard invoice mask commonly used
             invType.setTextContent("388"); // 388 = Commercial invoice
             invoice.appendChild(invType);
@@ -94,10 +91,10 @@ public class XMLcreator {
 
             // AdditionalDocumentReference - QR (Phase I TLV as Base64)
             String qrBase64 = generateZatcaQRBase64(data);
-            Element adrQR = doc.createElementNS(NS_CAC, "cac:AdditionalDocumentReference");
+            Element adrQR = createElement(doc, NS_CAC, "cac:AdditionalDocumentReference");
             addTextElement(doc, adrQR, NS_CBC, "cbc:ID", "QR");
-            Element attach = doc.createElementNS(NS_CAC, "cac:Attachment");
-            Element emb = doc.createElementNS(NS_CBC, "cbc:EmbeddedDocumentBinaryObject");
+            Element attach = createElement(doc, NS_CAC, "cac:Attachment");
+            Element emb = createElement(doc, NS_CBC, "cbc:EmbeddedDocumentBinaryObject");
             emb.setAttribute("mimeCode", "text/plain");
             emb.setTextContent(qrBase64);
             attach.appendChild(emb);
@@ -105,18 +102,18 @@ public class XMLcreator {
             invoice.appendChild(adrQR);
 
             // Supplier (minimal): VAT number + RegistrationName
-            Element supplier = doc.createElementNS(NS_CAC, "cac:AccountingSupplierParty");
-            Element supParty = doc.createElementNS(NS_CAC, "cac:Party");
+            Element supplier = createElement(doc, NS_CAC, "cac:AccountingSupplierParty");
+            Element supParty = createElement(doc, NS_CAC, "cac:Party");
             // PartyTaxScheme
-            Element supTax = doc.createElementNS(NS_CAC, "cac:PartyTaxScheme");
+            Element supTax = createElement(doc, NS_CAC, "cac:PartyTaxScheme");
             addTextElement(doc, supTax, NS_CBC, "cbc:CompanyID", data.iban != null ? nullToEmpty(data.iban.taxRegistrationNumber) : "");
-            Element supTaxScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
+            Element supTaxScheme = createElement(doc, NS_CAC, "cac:TaxScheme");
             addTextElement(doc, supTaxScheme, NS_CBC, "cbc:ID", "VAT");
             supTax.appendChild(supTaxScheme);
             supParty.appendChild(supTax);
 
             // PartyLegalEntity
-            Element supLegal = doc.createElementNS(NS_CAC, "cac:PartyLegalEntity");
+            Element supLegal = createElement(doc, NS_CAC, "cac:PartyLegalEntity");
             addTextElement(doc, supLegal, NS_CBC, "cbc:RegistrationName", "National Bank of Iraq");
             supParty.appendChild(supLegal);
 
@@ -124,30 +121,30 @@ public class XMLcreator {
             invoice.appendChild(supplier);
 
             // Customer
-            Element customer = doc.createElementNS(NS_CAC, "cac:AccountingCustomerParty");
-            Element cusParty = doc.createElementNS(NS_CAC, "cac:Party");
+            Element customer = createElement(doc, NS_CAC, "cac:AccountingCustomerParty");
+            Element cusParty = createElement(doc, NS_CAC, "cac:Party");
 
             // PostalAddress (combine Arabic | English like example, if available)
-            Element postal = doc.createElementNS(NS_CAC, "cac:PostalAddress");
+            Element postal = createElement(doc, NS_CAC, "cac:PostalAddress");
             addTextElement(doc, postal, NS_CBC, "cbc:StreetName",
                     joinBiLang(getOrEmpty(() -> data.customer.arabicAddress), getOrEmpty(() -> data.customer.englishAddress)));
             addTextElement(doc, postal, NS_CBC, "cbc:CityName",
                     joinBiLang(getOrEmpty(() -> data.customer.arabicCity), getOrEmpty(() -> data.customer.englishCity)));
-            Element country = doc.createElementNS(NS_CAC, "cac:Country");
+            Element country = createElement(doc, NS_CAC, "cac:Country");
             addTextElement(doc, country, NS_CBC, "cbc:IdentificationCode", "SA");
             postal.appendChild(country);
             cusParty.appendChild(postal);
 
             // PartyTaxScheme (customer VAT)
-            Element cusTax = doc.createElementNS(NS_CAC, "cac:PartyTaxScheme");
+            Element cusTax = createElement(doc, NS_CAC, "cac:PartyTaxScheme");
             addTextElement(doc, cusTax, NS_CBC, "cbc:CompanyID", getOrEmpty(() -> data.customer.vatNumber));
-            Element cusTaxScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
+            Element cusTaxScheme = createElement(doc, NS_CAC, "cac:TaxScheme");
             addTextElement(doc, cusTaxScheme, NS_CBC, "cbc:ID", "VAT");
             cusTax.appendChild(cusTaxScheme);
             cusParty.appendChild(cusTax);
 
             // PartyLegalEntity (customer name)
-            Element cusLegal = doc.createElementNS(NS_CAC, "cac:PartyLegalEntity");
+            Element cusLegal = createElement(doc, NS_CAC, "cac:PartyLegalEntity");
             addTextElement(doc, cusLegal, NS_CBC, "cbc:RegistrationName",
                     joinBiLang(getOrEmpty(() -> data.customer.arabicName), getOrEmpty(() -> data.customer.englishName)));
             cusParty.appendChild(cusLegal);
@@ -157,20 +154,20 @@ public class XMLcreator {
 
             // TaxTotal (overall) with VAT breakdown group (BG-23)
             if (data.totals != null) {
-                Element taxTotal = doc.createElementNS(NS_CAC, "cac:TaxTotal");
+                Element taxTotal = createElement(doc, NS_CAC, "cac:TaxTotal");
                 addAmount(doc, taxTotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
 
-                Element taxSubtotal = doc.createElementNS(NS_CAC, "cac:TaxSubtotal");
+                Element taxSubtotal = createElement(doc, NS_CAC, "cac:TaxSubtotal");
                 addAmount(doc, taxSubtotal, "cbc:TaxableAmount", nullToEmpty(data.totals.totalExcludingVat), "SAR");
                 addAmount(doc, taxSubtotal, "cbc:TaxAmount", nullToEmpty(data.totals.totalVat), "SAR");
 
-                Element taxCategory = doc.createElementNS(NS_CAC, "cac:TaxCategory");
+                Element taxCategory = createElement(doc, NS_CAC, "cac:TaxCategory");
                 addTextElement(doc, taxCategory, NS_CBC, "cbc:ID", "S");
                 String rate = (data.lineItems != null && !data.lineItems.isEmpty())
                         ? nullToEmpty(data.lineItems.get(0).rate)
                         : "15";
                 addTextElement(doc, taxCategory, NS_CBC, "cbc:Percent", rate);
-                Element taxScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
+                Element taxScheme = createElement(doc, NS_CAC, "cac:TaxScheme");
                 addTextElement(doc, taxScheme, NS_CBC, "cbc:ID", "VAT");
                 taxCategory.appendChild(taxScheme);
 
@@ -181,7 +178,7 @@ public class XMLcreator {
 
             // LegalMonetaryTotal
             if (data.totals != null) {
-                Element lmt = doc.createElementNS(NS_CAC, "cac:LegalMonetaryTotal");
+                Element lmt = createElement(doc, NS_CAC, "cac:LegalMonetaryTotal");
                 addAmount(doc, lmt, "cbc:LineExtensionAmount", nullToEmpty(data.totals.totalExcludingVat), "SAR");
                 addAmount(doc, lmt, "cbc:TaxExclusiveAmount", nullToEmpty(data.totals.totalExcludingVat), "SAR");
                 addAmount(doc, lmt, "cbc:TaxInclusiveAmount", nullToEmpty(data.totals.amountIncludesVat), "SAR");
@@ -196,32 +193,32 @@ public class XMLcreator {
             if (items != null) {
                 for (int i = 0; i < items.size(); i++) {
                     InvoiceLineItem it = items.get(i);
-                    Element line = doc.createElementNS(NS_CAC, "cac:InvoiceLine");
+                    Element line = createElement(doc, NS_CAC, "cac:InvoiceLine");
                     addTextElement(doc, line, NS_CBC, "cbc:ID", String.valueOf(i + 1));
                     addQty(doc, line, "cbc:InvoicedQuantity", nullToEmpty(it.quantity), "PCE");
                     addAmount(doc, line, "cbc:LineExtensionAmount", nullToEmpty(it.totalExcludingTax), "SAR");
 
-                    Element lineTaxTotal = doc.createElementNS(NS_CAC, "cac:TaxTotal");
+                    Element lineTaxTotal = createElement(doc, NS_CAC, "cac:TaxTotal");
                     addAmount(doc, lineTaxTotal, "cbc:TaxAmount", nullToEmpty(it.taxAmount), "SAR");
                     addAmount(doc, lineTaxTotal, "cbc:RoundingAmount", nullToEmpty(it.totalPrice), "SAR");
                     line.appendChild(lineTaxTotal);
 
-                    Element item = doc.createElementNS(NS_CAC, "cac:Item");
+                    Element item = createElement(doc, NS_CAC, "cac:Item");
                     // prefer Arabic like the example, fallback to English
                     String name = nullToEmpty(it.arabicDescription);
                     if (name.isEmpty()) name = nullToEmpty(it.englishDescription);
                     addTextElement(doc, item, NS_CBC, "cbc:Name", name);
 
-                    Element classTax = doc.createElementNS(NS_CAC, "cac:ClassifiedTaxCategory");
+                    Element classTax = createElement(doc, NS_CAC, "cac:ClassifiedTaxCategory");
                     addTextElement(doc, classTax, NS_CBC, "cbc:ID", "S");
                     addTextElement(doc, classTax, NS_CBC, "cbc:Percent", nullToEmpty(it.rate));
-                    Element taxScheme = doc.createElementNS(NS_CAC, "cac:TaxScheme");
+                    Element taxScheme = createElement(doc, NS_CAC, "cac:TaxScheme");
                     addTextElement(doc, taxScheme, NS_CBC, "cbc:ID", "VAT");
                     classTax.appendChild(taxScheme);
                     item.appendChild(classTax);
                     line.appendChild(item);
 
-                    Element price = doc.createElementNS(NS_CAC, "cac:Price");
+                    Element price = createElement(doc, NS_CAC, "cac:Price");
                     addAmount(doc, price, "cbc:PriceAmount", nullToEmpty(it.unitPrice), "SAR");
                     line.appendChild(price);
 
@@ -270,23 +267,35 @@ public class XMLcreator {
     }
 
     private static void addTextElement(Document doc, Element parent, String ns, String qname, String value) {
-        Element e = doc.createElementNS(ns, qname);
+        Element e = createElement(doc, ns, qname);
         e.setTextContent(value == null ? "" : value);
         parent.appendChild(e);
     }
 
     private static void addAmount(Document doc, Element parent, String qname, String value, String currency) {
-        Element e = doc.createElementNS(NS_CBC, qname);
+        Element e = createElement(doc, NS_CBC, qname);
         e.setAttribute("currencyID", currency);
         e.setTextContent(value == null ? "0.00" : value);
         parent.appendChild(e);
     }
 
     private static void addQty(Document doc, Element parent, String qname, String value, String unitCode) {
-        Element e = doc.createElementNS(NS_CBC, qname);
+        Element e = createElement(doc, NS_CBC, qname);
         e.setAttribute("unitCode", unitCode);
         e.setTextContent(value == null ? "0" : value);
         parent.appendChild(e);
+    }
+
+    private static Element createElement(Document doc, String ns, String qname) {
+        Element element = doc.createElementNS(ns, qname);
+        int colon = qname.indexOf(':');
+        if (colon >= 0) {
+            String prefix = qname.substring(0, colon);
+            element.setAttribute("xmlns:" + prefix, ns);
+        } else {
+            element.setAttribute("xmlns", ns);
+        }
+        return element;
     }
 
     private static String nullToEmpty(String s) { return s == null ? "" : s; }
